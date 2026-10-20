@@ -8,5 +8,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['tests/unit/**/*.test.{ts,tsx}', 'tests/integration/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    setupFiles: ['./tests/setup.ts'],
   },
 });

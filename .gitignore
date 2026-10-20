@@ -39,3 +39,6 @@ next-env.d.ts
 playwright-report/
 test-results/
 blob-report/
+# registry build output (npm run registry:build)
+/public/r/
+/.registry-build/

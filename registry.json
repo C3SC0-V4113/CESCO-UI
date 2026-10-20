@@ -1,0 +1,33 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "cesco",
+  "homepage": "https://ui.cescovalle.com",
+  "items": [
+    {
+      "name": "stat-card",
+      "type": "registry:component",
+      "title": "Stat Card",
+      "description": "A metric card with a percentage change badge.",
+      "registryDependencies": ["card", "badge"],
+      "files": [
+        {
+          "path": "registry/shared/stat-card/stat-card.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "favorite-toggle",
+      "type": "registry:component",
+      "title": "Favorite Toggle",
+      "description": "A heart toggle for marking an item as a favorite.",
+      "registryDependencies": ["toggle"],
+      "files": [
+        {
+          "path": "registry/bases/{base}/favorite-toggle/favorite-toggle.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}
