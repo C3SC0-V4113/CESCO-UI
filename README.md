@@ -73,7 +73,7 @@ npx purrfold@latest my-app --shadcn-args --preset b5eH0WVTX --yes
 Components are published as a shadcn registry at `https://ui.cescovalle.com/r/{style}/{name}.json`, so they install in the user's base (Base UI, Radix or React Aria), style, icon library, colors, radius and font:
 
 ```bash
-npx shadcn@latest add @cesco/stat-card
+npx shadcn@latest add @cesco/password-input
 ```
 
 Until `@cesco` is listed in the shadcn registry directory, users add it to their `components.json`:
@@ -101,7 +101,7 @@ npm run registry:build                 # public/r/<base>-<style>/<name>.json (al
 npm run test:registry-install -- aria  # install every item into a fresh app, per icon library, and type-check it
 ```
 
-The `Registry Install` workflow runs `test:registry-install` for every base on each pull request. Component behavior is covered by Vitest (`tests/unit/registry`, every base variant) and Playwright (`/preview`).
+The `Registry Install` workflow runs `test:registry-install` for every base on each pull request. Component behavior is covered by Vitest (`tests/unit/registry`, every base variant) and Playwright (the component pages).
 
 ### Component checklist
 

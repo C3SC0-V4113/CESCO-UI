@@ -22,6 +22,13 @@ function getItemFiles(item: RegistryItem) {
   );
 }
 
+describe('registry.json', () => {
+  it('has unique item names', () => {
+    const names = registry.items.map((item) => item.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+});
+
 describe.each(registry.items)('registry item $name', (item) => {
   const files = getItemFiles(item);
 
