@@ -4,6 +4,7 @@
       ".agents/**",
       ".claude/**",
       "components/ui/**",
+      "registry/bases/*/ui/**",
       "playwright-report/**",
       "test-results/**",
       "blob-report/**"

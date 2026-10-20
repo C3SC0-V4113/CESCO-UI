@@ -135,6 +135,8 @@ const eslintConfig = defineConfig([
     '.atl/**',
     '.react-scan/**',
     'components/ui/**',
+    // Vendored shadcn primitives used to develop and test each base variant.
+    'registry/bases/*/ui/**',
     'coverage/**',
     'playwright-report/**',
     'test-results/**',
