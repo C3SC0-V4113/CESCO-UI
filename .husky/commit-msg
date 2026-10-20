@@ -1,1 +1,6 @@
-npx commitlint --edit $1
+if grep -Eiq 'Co-Authored-By|Claude-Session|Generated with' "$1"; then
+  echo "Commit messages must not contain AI attribution." >&2
+  exit 1
+fi
+
+npx commitlint --edit "$1"
