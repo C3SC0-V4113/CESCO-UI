@@ -94,6 +94,19 @@ Until `@cesco` is listed in the shadcn registry directory, users add it to their
 - `registry/bases/<base>/ui/`: vendored shadcn primitives used only to develop and test each variant. They are not published; imports of `@/registry/bases/<base>/ui/*` become `@/components/ui/*` on install.
 - `registry/shared/lib/icon-placeholder.tsx`: write icons as `<IconPlaceholder lucide="…" tabler="…" hugeicons="…" phosphor="…" remixicon="…" />`. On install the shadcn CLI swaps it for the icon of the user's library.
 
+### Base primitive mapping
+
+Use shadcn's official per-base implementation as the source of truth when adding a vendored primitive. Put only primitives imported by the component under `registry/bases/<base>/ui/`; registry items resolve those paths to the user's `components/ui/` directory on install.
+
+| Primitive  | Base UI (`base`)                             | Radix (`radix`)                                                      | React Aria (`aria`)                                        |
+| ---------- | -------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `button`   | `@base-ui/react/button`                      | `radix-ui` Slot with a native button                                 | `react-aria-components` Button (and Link for link buttons) |
+| `input`    | `@base-ui/react/input`                       | Native HTML `<input>`                                                | `react-aria-components` Input                              |
+| `badge`    | Native `<span>`; no behavior primitive       | Native `<span>`; no behavior primitive                               | Native `<span>`; no behavior primitive                     |
+| `combobox` | `@base-ui/react/combobox` compound component | Compose the vendored Radix `popover` and `command` (cmdk) components | `react-aria-components` Combobox compound component        |
+
+The shadcn implementations use the same component names and `data-slot` markers across bases where practical, but component props and state selectors can differ. Keep those variants under each base's `registry/bases/<base>/` directory. Source references: [button](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [input](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [combobox docs](https://ui.shadcn.com/docs/components/base/combobox) (switch base for React Aria or Radix), and [command](https://ui.shadcn.com/docs/components/radix/command).
+
 ### Scripts
 
 ```bash
@@ -110,3 +123,5 @@ The `Registry Install` workflow runs `test:registry-install` for every base on e
 3. shadcn components imported from `@/components/ui/*` and listed in `registryDependencies`.
 4. Base-specific props or `data-*` selectors: one variant per base under `registry/bases/<base>/`.
 5. Unit tests for every variant, then `npm run registry:build`.
+
+The app sidebar and index are driven by `registry.json`. Each item page loads `app/components/_demos/<name>.tsx` by its registry name; export the demo as default and accept the current base in its `base` prop. Adding a registry item and its matching demo file is enough to make its page available.
