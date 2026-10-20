@@ -1,8 +1,10 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
-This project uses Next.js 16 or newer. APIs and conventions may differ from model memory. Read relevant guides in `node_modules/next/dist/docs/` before changing Next.js code.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
 
@@ -18,6 +20,23 @@ Run these before claiming implementation complete:
 - Run `npm run test:e2e` when E2E behavior changed.
 - `npm run doctor`
 - `npm run check`
+
+## Git
+
+- Use only the local git identity for Francisco Valle.
+- Never add `Co-Authored-By`, `Claude-Session`, `Generated with`, or other AI attribution to commits or PR bodies.
+- Use conventional commit messages and split changes into units of work.
+
+## Registry component checklist
+
+- Use semantic design tokens only.
+- Use `IconPlaceholder` with icon names for all five supported libraries: lucide, tabler, hugeicons, phosphor, and remixicon.
+- Add `data-slot` markers to vendored primitives and custom components.
+- Set `registryDependencies` and package `dependencies` correctly.
+- Add one variant per base under `registry/bases/<base>/` when the primitive API differs.
+- Add unit tests for every base variant with `describe.each`.
+- Add a demo file and register it in the app navigation/demo map.
+- Keep English as the default for user-facing strings, and make every such string overridable through props.
 
 `npm run lint` runs `@shadcn/lint`. Fix its design system errors with the tokens, variants, and sizes described in `DESIGN.md`; do not disable its rules.
 
