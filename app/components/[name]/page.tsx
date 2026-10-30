@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
 import { BaseSwitcher } from '@/app/components/_components/base-switcher';
+import { demos } from '@/app/components/_demos';
 import { components } from '@/app/registry';
 
-import type { DemoProps } from '@/app/components/_demos/types';
 import type { Metadata } from 'next';
-import type { ComponentType } from 'react';
 
 export function generateStaticParams() {
   return components.map(({ name }) => ({ name }));
@@ -24,19 +24,22 @@ export async function generateMetadata({
   return { title: `${component.title} | Cesco UI`, description: component.description };
 }
 
-export default async function ComponentPage({ params }: { params: Promise<{ name: string }> }) {
+export default function ComponentPage({ params }: { params: Promise<{ name: string }> }) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-4xl" aria-busy="true" />}>
+      <ComponentPageContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ComponentPageContent({ params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
   const component = components.find((item) => item.name === name);
 
   if (!component) notFound();
 
-  let Demo: ComponentType<DemoProps>;
-  try {
-    const demoModule = await import(`../_demos/${name}`);
-    Demo = demoModule.default;
-  } catch {
-    notFound();
-  }
+  const Demo = demos[name];
+  if (!Demo) notFound();
 
   return (
     <article className="mx-auto max-w-4xl">
