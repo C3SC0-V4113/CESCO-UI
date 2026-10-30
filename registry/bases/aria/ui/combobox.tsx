@@ -38,7 +38,6 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput,
 } from '@/registry/bases/aria/ui/input-group';
 import { IconPlaceholder } from '@/registry/shared/lib/icon-placeholder';
 
@@ -110,13 +109,20 @@ function ComboboxInput({
   showTrigger = true,
   showClear = false,
   ...props
-}: React.ComponentProps<'input'> & {
+}: InputProps & {
   showTrigger?: boolean;
   showClear?: boolean;
 }) {
   return (
     <InputGroup className={cn('w-auto', className)}>
-      <InputGroupInput disabled={disabled} {...props} />
+      <InputPrimitive
+        data-slot="input-group-control"
+        disabled={disabled}
+        className={cn(
+          'flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent'
+        )}
+        {...props}
+      />
       <InputGroupAddon align="inline-end">
         {showTrigger && (
           <InputGroupButton
