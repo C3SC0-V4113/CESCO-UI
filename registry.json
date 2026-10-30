@@ -52,6 +52,20 @@
           "target": "components/phone-input/index.tsx"
         }
       ]
+    },
+    {
+      "name": "password-input",
+      "type": "registry:component",
+      "title": "Password Input",
+      "description": "A password input with an accessible control to show or hide its value.",
+      "dependencies": ["cn"],
+      "registryDependencies": ["input-group"],
+      "files": [
+        {
+          "path": "registry/bases/{base}/password-input/password-input.tsx",
+          "type": "registry:component"
+        }
+      ]
     }
   ]
 }
