@@ -22,6 +22,11 @@
           "target": "lib/country-flag-loaders.ts"
         },
         {
+          "path": "registry/shared/types/country-flag-icons.d.ts",
+          "type": "registry:file",
+          "target": "types/country-flag-icons.d.ts"
+        },
+        {
           "path": "registry/shared/components/country-flag.tsx",
           "type": "registry:component",
           "target": "components/phone-input/country-flag.tsx"

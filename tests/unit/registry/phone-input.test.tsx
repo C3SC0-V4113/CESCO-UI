@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getCountries } from 'libphonenumber-js';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +7,13 @@ import { PhoneInput as Base } from '@/registry/bases/base/phone-input/phone-inpu
 import { PhoneInput as Radix } from '@/registry/bases/radix/phone-input/phone-input';
 import { countryFlagLoaders } from '@/registry/shared/lib/country-flag-loaders';
 import { deriveFromValue, getCountryOptions, toE164 } from '@/registry/shared/lib/phone';
+
+async function waitForCountryFlag() {
+  await waitFor(() => {
+    // eslint-disable-next-line testing-library/no-node-access -- Verify the public data-slot emitted by the registry component.
+    expect(document.querySelector('[data-slot="country-flag"]')).not.toBeNull();
+  });
+}
 
 describe('phone helpers', () => {
   it('converts national digits to E.164 and leaves incomplete values empty', () => {
@@ -65,9 +72,10 @@ describe.each([
       expect(onChange).toHaveBeenLastCalledWith('+447911123456');
     }
   );
-  it('hydrates an initial E.164 value and removes pasted calling code', () => {
+  it('hydrates an initial E.164 value and removes pasted calling code', async () => {
     const onChange = vi.fn();
     const { rerender } = render(<PhoneInput value="+50374920123" onChange={onChange} />);
+    await waitForCountryFlag();
     expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('7492 0123');
     expect(screen.getByText('+503')).toBeTruthy();
     rerender(<PhoneInput value="" onChange={onChange} defaultCountry="SV" />);
@@ -75,34 +83,37 @@ describe.each([
     expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('7492 0123');
     expect(onChange).toHaveBeenLastCalledWith('+50374920123');
   });
-  it('syncs external value changes, including clearing the field', () => {
+  it('syncs external value changes, including clearing the field', async () => {
     const { rerender } = render(<PhoneInput value="+50374920123" onChange={vi.fn()} />);
+    await waitForCountryFlag();
     const input = screen.getByRole('textbox') as HTMLInputElement;
     expect(input.value).toBe('7492 0123');
     expect(screen.getByText('+503')).toBeTruthy();
 
     rerender(<PhoneInput value="+15025551234" onChange={vi.fn()} />);
-    expect(input.value).toBe('(502) 555-1234');
+    await waitFor(() => expect(input.value).toBe('(502) 555-1234'));
     expect(screen.getByText('+1')).toBeTruthy();
 
     rerender(<PhoneInput value="" onChange={vi.fn()} defaultCountry="SV" />);
     expect(input.value).toBe('');
     expect(screen.getByText('+503')).toBeTruthy();
   });
-  it('keeps partial values and does not erase a field for a stale partial update', () => {
+  it('keeps partial values and does not erase a field for a stale partial update', async () => {
     const onChange = vi.fn();
     const { rerender } = render(<PhoneInput value="+1555" onChange={onChange} />);
+    await waitForCountryFlag();
     const input = screen.getByRole('textbox') as HTMLInputElement;
     expect(input.value.replace(/\D/g, '')).toBe('555');
     rerender(<PhoneInput value="+44791" onChange={onChange} />);
-    expect(input.value.replace(/\D/g, '')).toBe('791');
+    await waitFor(() => expect(input.value.replace(/\D/g, '')).toBe('791'));
     expect(screen.getByText('+44')).toBeTruthy();
     rerender(<PhoneInput value="+4479" onChange={onChange} />);
     expect(input.value.replace(/\D/g, '')).toBe('79');
   });
-  it('clears a GB field when its controlled value resets to empty after incomplete input', () => {
+  it('clears a GB field when its controlled value resets to empty after incomplete input', async () => {
     const onChange = vi.fn();
     const { rerender } = render(<PhoneInput value="" onChange={onChange} defaultCountry="GB" />);
+    await waitForCountryFlag();
     const input = screen.getByRole('textbox') as HTMLInputElement;
     fireEvent.change(input, { target: { value: '0' } });
     expect(onChange).toHaveBeenLastCalledWith('+440');
@@ -116,7 +127,7 @@ describe.each([
     fireEvent.change(input, { target: { value: '74920123' } });
     expect(input.value).toBe('7492 0123');
   });
-  it('restricts picker countries, intersects pinned countries, and retains an excluded selection', () => {
+  it('restricts picker countries, intersects pinned countries, and retains an excluded selection', async () => {
     render(
       <PhoneInput
         value="+447911123456"
@@ -126,6 +137,7 @@ describe.each([
         countryLabel="Country selector"
       />
     );
+    await waitForCountryFlag();
     expect(screen.getByText('+44')).toBeTruthy();
     openCountryPicker();
     expect(screen.getAllByRole('option')).toHaveLength(2);
@@ -133,7 +145,7 @@ describe.each([
     expect(screen.getByText('El Salvador')).toBeTruthy();
     expect(screen.queryByText('Canada')).toBeNull();
   });
-  it('selects the filtered country with ArrowDown and Enter', () => {
+  it('selects the filtered country with ArrowDown and Enter', async () => {
     render(
       <PhoneInput
         value=""
@@ -143,6 +155,7 @@ describe.each([
         countryLabel="Country selector"
       />
     );
+    await waitForCountryFlag();
     openCountryPicker();
     const search = screen.getByPlaceholderText('Search country');
     fireEvent.change(search, { target: { value: 'United States' } });
@@ -156,7 +169,7 @@ describe.each([
   });
   it('loads the selected flag on demand', async () => {
     render(<PhoneInput value="" onChange={vi.fn()} defaultCountry="SV" />);
-    expect(await screen.findByTestId('country-flag')).toBeTruthy();
+    expect(await waitForCountryFlag()).not.toBeNull();
   });
   it('defaults to the US and exposes an overridable country label', () => {
     const { rerender } = render(<PhoneInput value="" onChange={vi.fn()} />);

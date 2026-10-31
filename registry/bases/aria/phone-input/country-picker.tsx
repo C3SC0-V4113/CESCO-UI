@@ -38,7 +38,7 @@ export function CountryPicker({
   const [query, setQuery] = useState('');
   const triggerRef = useRef<HTMLDivElement>(null);
   const filter = useFilter({ sensitivity: 'base' });
-  const { pinned, all, options } = useMemo(
+  const { pinned, all } = useMemo(
     () => getCountryOptions(locale, pinnedCountries, countries),
     [locale, pinnedCountries, countries]
   );
@@ -49,7 +49,6 @@ export function CountryPicker({
   const allItems = all.filter(
     (item) => includes(item.name) || item.calling.includes(query.trim().replace(/^\+/, ''))
   );
-  const selected = options.find((option) => option.code === country);
   const groups = pinned.length
     ? [
         { label: pinnedGroupLabel, items: pinnedItems },
@@ -84,9 +83,7 @@ export function CountryPicker({
           aria-label={countryLabel}
           className={buttonVariants({ variant: 'outline', className: 'w-fit whitespace-nowrap' })}
         >
-          {selected && (
-            <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
-          )}
+          <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
           <span>+{getCountryCallingCode(country)}</span>
         </ComboboxTrigger>
       </div>
