@@ -13,9 +13,6 @@ import path from 'node:path';
 
 export const BASES = ['base', 'radix', 'aria'];
 export const STYLES = ['vega', 'nova', 'maia', 'lyra', 'mira', 'luma', 'rhea', 'sera'];
-// Older projects use the "new-york" style, which is built on Radix.
-const LEGACY_STYLES = { 'new-york': 'radix' };
-
 const root = path.resolve(import.meta.dirname, '..');
 const out = path.join(root, 'public/r');
 const tmp = path.join(root, '.registry-build');
@@ -95,10 +92,6 @@ try {
     for (const style of STYLES) {
       cpSync(baseOut, path.join(out, `${base}-${style}`), { recursive: true });
     }
-  }
-
-  for (const [style, base] of Object.entries(LEGACY_STYLES)) {
-    cpSync(path.join(tmp, 'out', base), path.join(out, style), { recursive: true });
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
