@@ -2,5 +2,56 @@
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "cesco",
   "homepage": "https://ui.cescovalle.com",
-  "items": []
+  "items": [
+    {
+      "name": "phone-input",
+      "type": "registry:component",
+      "title": "Phone Input",
+      "description": "A country-aware phone input that formats numbers as you type and emits E.164 values.",
+      "dependencies": ["cn", "country-flag-icons", "libphonenumber-js"],
+      "registryDependencies": ["button", "combobox", "input"],
+      "files": [
+        {
+          "path": "registry/shared/lib/phone.ts",
+          "type": "registry:lib",
+          "target": "lib/phone.ts"
+        },
+        {
+          "path": "registry/shared/lib/country-flag-loaders.ts",
+          "type": "registry:lib",
+          "target": "lib/country-flag-loaders.ts"
+        },
+        {
+          "path": "registry/shared/types/country-flag-icons.d.ts",
+          "type": "registry:file",
+          "target": "types/country-flag-icons.d.ts"
+        },
+        {
+          "path": "registry/shared/components/country-flag.tsx",
+          "type": "registry:component",
+          "target": "components/phone-input/country-flag.tsx"
+        },
+        {
+          "path": "registry/shared/components/country-picker-base.tsx",
+          "type": "registry:component",
+          "target": "components/phone-input/country-picker-base.tsx"
+        },
+        {
+          "path": "registry/shared/components/phone-input.tsx",
+          "type": "registry:component",
+          "target": "components/phone-input/phone-input-core.tsx"
+        },
+        {
+          "path": "registry/bases/{base}/phone-input/country-picker.tsx",
+          "type": "registry:component",
+          "target": "components/phone-input/country-picker.tsx"
+        },
+        {
+          "path": "registry/bases/{base}/phone-input/phone-input.tsx",
+          "type": "registry:component",
+          "target": "components/phone-input/index.tsx"
+        }
+      ]
+    }
+  ]
 }

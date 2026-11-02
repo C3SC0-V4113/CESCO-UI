@@ -98,14 +98,14 @@ Until `@cesco` is listed in the shadcn registry directory, users add it to their
 
 Use shadcn's official per-base implementation as the source of truth when adding a vendored primitive. Put only primitives imported by the component under `registry/bases/<base>/ui/`; registry items resolve those paths to the user's `components/ui/` directory on install.
 
-| Primitive  | Base UI (`base`)                             | Radix (`radix`)                                                      | React Aria (`aria`)                                        |
-| ---------- | -------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `button`   | `@base-ui/react/button`                      | `radix-ui` Slot with a native button                                 | `react-aria-components` Button (and Link for link buttons) |
-| `input`    | `@base-ui/react/input`                       | Native HTML `<input>`                                                | `react-aria-components` Input                              |
-| `badge`    | Native `<span>`; no behavior primitive       | Native `<span>`; no behavior primitive                               | Native `<span>`; no behavior primitive                     |
-| `combobox` | `@base-ui/react/combobox` compound component | Compose the vendored Radix `popover` and `command` (cmdk) components | `react-aria-components` Combobox compound component        |
+| Primitive  | Base UI (`base`)                                        | Radix (`radix`)                                                                | React Aria (`aria`)                                            |
+| ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `button`   | `@base-ui/react/button`                                 | `radix-ui` Slot with a native button                                           | `react-aria-components` Button (and Link for link buttons)     |
+| `input`    | `@base-ui/react/input`                                  | Native HTML `<input>`                                                          | `react-aria-components` Input                                  |
+| `badge`    | Native `<span>`; no behavior primitive                  | Native `<span>`; no behavior primitive                                         | Native `<span>`; no behavior primitive                         |
+| `combobox` | Official `base-nova` combobox built on `@base-ui/react` | Official `radix-nova` combobox built on `@base-ui/react` (same API as Base UI) | Official `aria-nova` combobox built on `react-aria-components` |
 
-The shadcn implementations use the same component names and `data-slot` markers across bases where practical, but component props and state selectors can differ. Keep those variants under each base's `registry/bases/<base>/` directory. Source references: [button](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [input](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [combobox docs](https://ui.shadcn.com/docs/components/base/combobox) (switch base for React Aria or Radix), and [command](https://ui.shadcn.com/docs/components/radix/command).
+The shadcn implementations use the same component names and `data-slot` markers across bases where practical, but component props and state selectors can differ. Keep those variants under each base's `registry/bases/<base>/` directory. Source references: [button](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [input](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases), [base combobox](https://ui.shadcn.com/r/styles/base-nova/combobox.json), [Radix combobox](https://ui.shadcn.com/r/styles/radix-nova/combobox.json), and [React Aria combobox](https://ui.shadcn.com/r/styles/aria-nova/combobox.json).
 
 ### Scripts
 

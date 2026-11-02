@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation';
 
 import { BaseSwitcher } from '@/app/components/_components/base-switcher';
+import { demos } from '@/app/components/_demos';
 import { components } from '@/app/registry';
 
-import type { DemoProps } from '@/app/components/_demos/types';
 import type { Metadata } from 'next';
-import type { ComponentType } from 'react';
 
 export function generateStaticParams() {
   return components.map(({ name }) => ({ name }));
@@ -30,13 +29,8 @@ export default async function ComponentPage({ params }: { params: Promise<{ name
 
   if (!component) notFound();
 
-  let Demo: ComponentType<DemoProps>;
-  try {
-    const demoModule = await import(`../_demos/${name}`);
-    Demo = demoModule.default;
-  } catch {
-    notFound();
-  }
+  const Demo = demos[name];
+  if (!Demo) notFound();
 
   return (
     <article className="mx-auto max-w-4xl">
