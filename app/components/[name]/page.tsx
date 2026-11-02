@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 
 import { BaseSwitcher } from '@/app/components/_components/base-switcher';
 import { demos } from '@/app/components/_demos';
@@ -24,15 +23,7 @@ export async function generateMetadata({
   return { title: `${component.title} | Cesco UI`, description: component.description };
 }
 
-export default function ComponentPage({ params }: { params: Promise<{ name: string }> }) {
-  return (
-    <Suspense fallback={<div className="mx-auto max-w-4xl" aria-busy="true" />}>
-      <ComponentPageContent params={params} />
-    </Suspense>
-  );
-}
-
-async function ComponentPageContent({ params }: { params: Promise<{ name: string }> }) {
+export default async function ComponentPage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
   const component = components.find((item) => item.name === name);
 
