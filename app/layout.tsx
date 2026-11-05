@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-dvh flex-col md:flex-row">
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === 'development' && process.env.PLAYWRIGHT_E2E !== '1' && (
           <Script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
         )}
         <SiteSidebar />
