@@ -124,4 +124,4 @@ The `Registry Install` workflow runs `test:registry-install` for every base on e
 4. Base-specific props or `data-*` selectors: one variant per base under `registry/bases/<base>/`.
 5. Unit tests for every variant, then `npm run registry:build`.
 
-The app sidebar and index are driven by `registry.json`. Each item page loads `app/components/_demos/<name>.tsx` by its registry name; export the demo as default and accept the current base in its `base` prop. Adding a registry item and its matching demo file is enough to make its page available.
+The app sidebar and index are driven by `registry.json`. Component documentation lives in `app/components/_docs/<name>.tsx`, with user-facing examples under `app/components/_examples/<name>/`. Each docs module declares its examples alongside explicit lazy imports of their preview modules. Add one entry to `app/components/_docs/index.ts` and a preview wrapper under `registry/preview/` to make each registry component page available. Example source is read directly from the files rendered in the preview, so shown code stays in sync with the implementation.
