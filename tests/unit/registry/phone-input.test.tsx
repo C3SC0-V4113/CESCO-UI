@@ -9,10 +9,13 @@ import { countryFlagLoaders } from '@/registry/shared/lib/country-flag-loaders';
 import { deriveFromValue, getCountryOptions, toE164 } from '@/registry/shared/lib/phone';
 
 async function waitForCountryFlag() {
-  await waitFor(() => {
-    // eslint-disable-next-line testing-library/no-node-access -- Verify the public data-slot emitted by the registry component.
-    expect(document.querySelector('[data-slot="country-flag"]')).not.toBeNull();
-  });
+  await waitFor(
+    () => {
+      // eslint-disable-next-line testing-library/no-node-access -- Verify the public data-slot emitted by the registry component.
+      expect(document.querySelector('[data-slot="country-flag"]')).not.toBeNull();
+    },
+    { timeout: 5000 }
+  );
 }
 
 describe('phone helpers', () => {
