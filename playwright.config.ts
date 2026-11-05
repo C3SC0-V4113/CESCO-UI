@@ -1,6 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseUrl = 'http://127.0.0.1:3000';
+const defaultPort = 3100;
+const e2ePortValue = process.env.E2E_PORT;
+const e2ePort =
+  e2ePortValue === undefined || e2ePortValue === '' ? defaultPort : Number(e2ePortValue);
+
+if (
+  e2ePortValue !== undefined &&
+  e2ePortValue !== '' &&
+  (!/^\d+$/.test(e2ePortValue) || !Number.isInteger(e2ePort) || e2ePort < 1 || e2ePort > 65_535)
+) {
+  throw new Error('E2E_PORT must be an integer from 1 to 65535.');
+}
+
+const baseUrl = `http://127.0.0.1:${e2ePort}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -19,9 +32,10 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'npm run dev -- --hostname 127.0.0.1 --port 3000',
+    command: `npm run dev -- --hostname 127.0.0.1 --port ${e2ePort}`,
     url: baseUrl,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
+    env: { ...process.env, PLAYWRIGHT_E2E: '1' },
   },
 });
