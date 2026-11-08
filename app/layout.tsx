@@ -1,7 +1,9 @@
 import { Geist, Geist_Mono } from 'next/font/google';
+import Link from 'next/link';
 import Script from 'next/script';
 
-import { SiteSidebar } from '@/app/_components/site-sidebar';
+import { AppSidebar } from '@/app/_components/app-sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 import type { Metadata } from 'next';
 
@@ -29,12 +31,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-dvh flex-col md:flex-row">
+      <body className="min-h-dvh">
         {process.env.NODE_ENV === 'development' && process.env.PLAYWRIGHT_E2E !== '1' && (
           <Script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
         )}
-        <SiteSidebar />
-        <main className="min-w-0 flex-1 p-6 md:p-10">{children}</main>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="min-h-svh">
+            <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4 md:hidden">
+              <SidebarTrigger />
+              <Link className="font-semibold tracking-tight" href="/">
+                Cesco UI
+              </Link>
+            </header>
+            <div className="min-w-0 flex-1 p-6 md:p-10">{children}</div>
+          </SidebarInset>
+        </SidebarProvider>
       </body>
     </html>
   );
