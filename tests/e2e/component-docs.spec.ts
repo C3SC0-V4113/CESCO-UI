@@ -39,9 +39,9 @@ async function verifyComponentDocs(page: Page, check: ComponentDocsCheck) {
     { manager: 'bun', command: `bunx --bun shadcn@latest add @cesco/${check.component}` },
   ]) {
     await managerTabs.getByRole('tab', { name: manager, exact: true }).click();
-    await expect(page.getByRole('tabpanel', { name: manager }).locator('pre code')).toContainText(
-      command
-    );
+    await expect(
+      page.getByRole('tabpanel', { name: manager, exact: true }).locator('pre code')
+    ).toContainText(command);
   }
 
   const defaultInput = page.locator(check.inputSelector);
