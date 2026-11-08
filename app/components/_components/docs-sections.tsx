@@ -33,9 +33,9 @@ export function InstallationSection({ name }: { name: string }) {
             </TabsTrigger>
           ))}
         </TabsList>
-        {commands.map(({ value, command }) => (
+        {commands.map(({ value, label, command }) => (
           <TabsContent key={value} value={value}>
-            <CodeBlock code={command} language="bash" />
+            <CodeBlock code={command} language="bash" title={`${label} install command`} />
           </TabsContent>
         ))}
       </Tabs>
@@ -49,6 +49,7 @@ export function InstallationSection({ name }: { name: string }) {
   }
 }`}
         language="json"
+        title="Registry configuration"
       />
     </section>
   );
@@ -60,7 +61,7 @@ export function UsageSection({ usage }: { usage: string }) {
       <h2 id="usage-heading" className="text-xl font-semibold tracking-tight">
         Usage
       </h2>
-      <CodeBlock code={usage} language="tsx" />
+      <CodeBlock code={usage} language="tsx" title="Usage" />
     </section>
   );
 }

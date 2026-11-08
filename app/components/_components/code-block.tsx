@@ -1,39 +1,56 @@
 import { cn } from 'cn';
 import { cacheLife } from 'next/cache';
-import { codeToHtml } from 'shiki';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  CodeBlock as ShadcnCodeBlock,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+  CodeBlockLine,
+  CodeBlockTitle,
+} from '@/components/ui/code-block';
+import { highlightCode } from '@/lib/highlighter';
 
-import { CopyButton } from './copy-button';
-
-type CodeLanguage = 'bash' | 'json' | 'tsx';
-
-export async function CodeBlock({ code, language }: { code: string; language: CodeLanguage }) {
+export async function CodeBlock({
+  code,
+  language,
+  title,
+  className,
+  size = 'default',
+}: {
+  code: string;
+  language: string;
+  title: string;
+  className?: string;
+  size?: 'default' | 'sm';
+}) {
   'use cache';
   cacheLife('max');
 
-  const html = await codeToHtml(code, {
-    lang: language,
-    themes: { light: 'github-light', dark: 'github-dark' },
-    defaultColor: false,
-  });
-  const copyButtonPosition = code.includes('\n') ? 'top-3' : 'top-1/2 -translate-y-1/2';
+  const lines = (await highlightCode(code, language)) ?? code.split('\n');
+  const sourceLines = code.split('\n');
+  const lineOccurrences = new Map<string, number>();
 
   return (
-    <Card size="sm" className="min-w-0">
-      <CardContent>
-        <div className="relative min-h-7 min-w-0 pr-20">
-          <CopyButton value={code} className={cn('absolute right-3 z-10', copyButtonPosition)} />
-          <ScrollArea className="w-full min-w-0">
-            <div
-              className="shiki-code min-w-max pb-3 text-sm"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </div>
-      </CardContent>
-    </Card>
+    <ShadcnCodeBlock size={size} className={cn('min-w-0', className)}>
+      <CodeBlockHeader className="sr-only">
+        <CodeBlockTitle>{title}</CodeBlockTitle>
+      </CodeBlockHeader>
+      <CodeBlockActions>
+        <CodeBlockCopyButton value={code} />
+      </CodeBlockActions>
+      <div className="min-w-0 pr-20">
+        <CodeBlockContent>
+          {lines.map((line, index) => {
+            const text = sourceLines[index] ?? '';
+            const occurrence = lineOccurrences.get(text) ?? 0;
+            lineOccurrences.set(text, occurrence + 1);
+
+            return <CodeBlockLine key={`${text}:${occurrence}`}>{line}</CodeBlockLine>;
+          })}
+        </CodeBlockContent>
+      </div>
+    </ShadcnCodeBlock>
   );
 }

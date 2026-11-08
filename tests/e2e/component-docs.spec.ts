@@ -12,6 +12,7 @@ type ComponentDocsCheck = {
   exampleInputText: string;
   expectedExampleInputValue: string;
   exampleCodeMarker: string;
+  extraDependencyCommand: string;
   copiedSource: string;
   waitUntilInteractive: (page: Page) => Promise<void>;
 };
@@ -78,12 +79,19 @@ async function verifyComponentDocs(page: Page, check: ComponentDocsCheck) {
   const selectedViewTabs = selectedExamplePanel.getByRole('tablist', { name: 'Example view' });
   await expect(selectedExamplePanel.locator(check.exampleInputSelector)).toBeVisible();
   await selectedViewTabs.getByRole('tab', { name: 'Code' }).click();
-  const code = selectedExamplePanel.getByRole('tabpanel', { name: 'Code' }).locator('pre code');
+  await expect(selectedExamplePanel.getByText('This example also uses')).toBeVisible();
+  await expect(selectedExamplePanel.locator('pre code').first()).toContainText(
+    check.extraDependencyCommand
+  );
+  const code = selectedExamplePanel
+    .getByRole('tabpanel', { name: 'Code' })
+    .locator('pre code')
+    .last();
   await expect(code).toContainText(`@/components/${check.component}`);
   await expect(code).not.toContainText('@/registry');
   await expect(code).toContainText(check.exampleCodeMarker);
   await page.getByRole('button', { name: 'Copy' }).last().click();
-  await expect(page.getByRole('status').last()).toHaveText('Copied');
+  await expect(page.locator('[aria-live="polite"]').last()).toHaveText('Copied');
   await expect
     .poll(() => page.evaluate(() => (window as Window & { copiedText?: string }).copiedText))
     .toContain(check.copiedSource);
@@ -102,6 +110,7 @@ test('password input docs preserve the controlled preview and provide installed 
     exampleInputText: 'invalid-demo',
     expectedExampleInputValue: 'invalid-demo',
     exampleCodeMarker: 'id="password-invalid"',
+    extraDependencyCommand: 'npx shadcn@latest add field',
     copiedSource: '@/components/password-input',
     waitUntilInteractive: async (currentPage) => {
       await currentPage.getByRole('button', { name: 'Show password' }).first().click();
@@ -125,6 +134,7 @@ test('phone input docs preserve the controlled preview and provide installed cod
     exampleInputText: '2025550123',
     expectedExampleInputValue: '(202) 555-0123',
     exampleCodeMarker: 'id="phone-limited"',
+    extraDependencyCommand: 'npx shadcn@latest add field',
     copiedSource: '@/components/phone-input',
     waitUntilInteractive: async (currentPage) => {
       await currentPage.getByRole('combobox', { name: 'Country' }).first().click();

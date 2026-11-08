@@ -1,16 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { configure, fireEvent, render, screen } from '@testing-library/react';
 import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ComponentBaseProvider } from '@/app/components/_components/base-context';
-import { CopyButton } from '@/app/components/_components/copy-button';
-import { ExampleDependenciesNotice } from '@/app/components/_components/examples-viewer';
 import { rewriteExampleImports } from '@/app/components/_docs/code';
 import { passwordInputDocs } from '@/app/components/_docs/password-input';
 import { phoneInputDocs } from '@/app/components/_docs/phone-input';
+import { CodeBlockCopyButton } from '@/components/ui/code-block';
 import { PasswordInput as PasswordInputPreview } from '@/registry/preview/password-input';
 import { PhoneInput as PhoneInputPreview } from '@/registry/preview/phone-input';
 import registry from '@/registry.json';
@@ -197,50 +196,19 @@ describe('example source rewrites', () => {
     }
   });
 
-  it('renders extra UI dependencies as a copyable install command', () => {
-    const dependencies = phoneInputDocs.examples[0].extraUiDependencies;
-    const command = `npx shadcn@latest add ${dependencies.join(' ')}`;
-    render(<ExampleDependenciesNotice dependencies={dependencies} />);
-
-    expect(screen.getByText('This example also uses')).toBeTruthy();
-    expect(screen.getByText(command)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
-  });
-
-  it('shows and announces clipboard failures with a stable accessible name', async () => {
+  it('copies code and announces success', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
-      value: { writeText: vi.fn().mockRejectedValue(new Error('Clipboard unavailable')) },
+      value: { writeText },
     });
-    render(<CopyButton value="example source" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
-
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Copy' }).textContent).toBe('Copy failed')
-    );
-    await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Copy failed'));
-  });
-
-  it('re-announces repeated copies and shows visible feedback', async () => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText: vi.fn().mockResolvedValue(undefined) },
-    });
-    render(<CopyButton value="example source" />);
+    render(<CodeBlockCopyButton value="example source" />);
     const button = screen.getByRole('button', { name: 'Copy' });
 
     fireEvent.click(button);
-    await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Copied'));
-    const status = screen.getByRole('status');
-
-    fireEvent.click(button);
-    expect(status.textContent).toBe('');
-    await waitFor(() => {
-      expect(status.textContent).toBe('Copied');
-    });
-    expect(button.textContent).toBe('Copied');
-    expect(button.getAttribute('aria-label')).toBe('Copy');
+    await screen.findByRole('button', { name: 'Copied' });
+    expect(screen.getByText('Copied')).toBeTruthy();
+    expect(writeText).toHaveBeenCalledWith('example source');
   });
 });
 
