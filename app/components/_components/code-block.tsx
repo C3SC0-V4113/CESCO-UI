@@ -31,7 +31,7 @@ export async function CodeBlock({
   const lineOccurrences = new Map<string, number>();
 
   return (
-    <ShadcnCodeBlock size={size} data-copy-action="true" className={cn('min-w-0', className)}>
+    <ShadcnCodeBlock size={size} className={cn('min-w-0', className)}>
       <CodeBlockActions>
         <CodeBlockCopyButton value={code} />
       </CodeBlockActions>
