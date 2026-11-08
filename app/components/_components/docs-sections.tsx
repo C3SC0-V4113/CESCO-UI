@@ -1,3 +1,13 @@
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
 import { CopyButton } from './copy-button';
 
 import type { ApiProp } from '../_docs/types';
@@ -46,43 +56,46 @@ export function ApiReference({ props }: { props: ApiProp[] }) {
       <h2 id="api-heading" className="text-xl font-semibold tracking-tight">
         API Reference
       </h2>
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[48rem] table-fixed text-left text-sm">
-          <colgroup>
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
-            <col className="w-[20%]" />
-            <col className="w-[30%]" />
-          </colgroup>
-          <thead className="border-b bg-muted/40">
-            <tr>
-              <th scope="col" className="p-3 font-medium">
-                Prop
-              </th>
-              <th scope="col" className="p-3 font-medium">
-                Type
-              </th>
-              <th scope="col" className="p-3 font-medium">
-                Default
-              </th>
-              <th scope="col" className="p-3 font-medium">
-                Description
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {props.map((prop) => (
-              <tr key={prop.name} className="border-b last:border-0">
-                <th scope="row" className="p-3 font-mono font-normal">
-                  {prop.name}
-                </th>
-                <td className="p-3 font-mono break-words">{prop.type}</td>
-                <td className="p-3 font-mono break-words">{prop.defaultValue}</td>
-                <td className="p-3 break-words text-muted-foreground">{prop.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="min-w-0 rounded-lg border">
+        <ScrollArea className="w-full min-w-0">
+          <div className="min-w-[48rem]">
+            <Table className="min-w-[48rem] table-fixed text-left">
+              <colgroup>
+                <col className="w-[25%]" />
+                <col className="w-[25%]" />
+                <col className="w-[20%]" />
+                <col className="w-[30%]" />
+              </colgroup>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Prop</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Default</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {props.map((prop) => (
+                  <TableRow key={prop.name}>
+                    <TableHead scope="row" className="whitespace-normal">
+                      <span className="font-mono font-normal">{prop.name}</span>
+                    </TableHead>
+                    <TableCell className="break-words whitespace-normal">
+                      <code>{prop.type}</code>
+                    </TableCell>
+                    <TableCell className="break-words whitespace-normal">
+                      <code>{prop.defaultValue}</code>
+                    </TableCell>
+                    <TableCell className="break-words whitespace-normal">
+                      <span className="text-muted-foreground">{prop.description}</span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </section>
   );

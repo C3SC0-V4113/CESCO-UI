@@ -1,5 +1,6 @@
 'use client';
 
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CopyButton } from './copy-button';
@@ -9,19 +10,23 @@ import type { ComponentExample } from '../_docs/types';
 
 export function ExampleCard({ example }: { example: ComponentExample }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-lg border bg-card text-card-foreground">
+    <Card className="min-w-0">
       <Tabs defaultValue="preview">
-        <div className="flex items-center justify-between gap-3 border-b p-3">
-          <TabsList aria-label="Example view">
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="code">Code</TabsTrigger>
-          </TabsList>
-          <CopyButton value={example.source} />
-        </div>
-        <TabsContent value="preview">
-          <div className="min-h-56 p-6">
-            <ExamplePreview preview={example.preview} />
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3 border-b pb-4">
+            <TabsList aria-label="Example view">
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="code">Code</TabsTrigger>
+            </TabsList>
+            <CopyButton value={example.source} />
           </div>
+        </CardHeader>
+        <TabsContent value="preview">
+          <CardContent>
+            <div className="min-h-56 p-6">
+              <ExamplePreview preview={example.preview} />
+            </div>
+          </CardContent>
         </TabsContent>
         <TabsContent value="code">
           <pre className="max-h-[32rem] max-w-full overflow-auto p-5 text-sm">
@@ -29,8 +34,8 @@ export function ExampleCard({ example }: { example: ComponentExample }) {
           </pre>
         </TabsContent>
       </Tabs>
-      <p className="border-t px-5 py-3 text-sm text-muted-foreground">{example.description}</p>
-    </div>
+      <CardFooter>{example.description}</CardFooter>
+    </Card>
   );
 }
 
