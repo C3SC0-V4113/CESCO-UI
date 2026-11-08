@@ -7,11 +7,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ComponentBaseProvider } from '@/app/components/_components/base-context';
 import { CopyButton } from '@/app/components/_components/copy-button';
+import { ExampleDependenciesNotice } from '@/app/components/_components/examples-viewer';
 import { rewriteExampleImports } from '@/app/components/_docs/code';
 import { passwordInputDocs } from '@/app/components/_docs/password-input';
 import { phoneInputDocs } from '@/app/components/_docs/phone-input';
 import { PasswordInput as PasswordInputPreview } from '@/registry/preview/password-input';
 import { PhoneInput as PhoneInputPreview } from '@/registry/preview/phone-input';
+import registry from '@/registry.json';
 
 const bases = ['base', 'radix', 'aria'] as const;
 
@@ -135,35 +137,74 @@ describe('example source rewrites', () => {
       dependencies: Record<string, string>;
     };
 
-    for (const example of [...passwordInputDocs.examples, ...phoneInputDocs.examples]) {
-      const source = ts.createSourceFile(
-        `${example.id}.tsx`,
-        example.source,
-        ts.ScriptTarget.Latest,
-        true,
-        ts.ScriptKind.TSX
-      );
+    for (const { name, examples } of [
+      { name: 'password-input', examples: passwordInputDocs.examples },
+      { name: 'phone-input', examples: phoneInputDocs.examples },
+    ]) {
+      const component = registry.items.find((item) => item.name === name);
+      expect(component, `${name} is missing from registry.json`).toBeDefined();
+      const registryDependencies = component?.registryDependencies ?? [];
 
-      for (const statement of source.statements) {
-        if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
-          continue;
+      for (const example of examples) {
+        const source = ts.createSourceFile(
+          `${example.id}.tsx`,
+          example.source,
+          ts.ScriptTarget.Latest,
+          true,
+          ts.ScriptKind.TSX
+        );
+        const uiDependencies = new Set<string>();
+
+        for (const statement of source.statements) {
+          if (
+            !ts.isImportDeclaration(statement) ||
+            !ts.isStringLiteral(statement.moduleSpecifier)
+          ) {
+            continue;
+          }
+          const moduleName = statement.moduleSpecifier.text;
+          const packageName = moduleName.startsWith('@')
+            ? moduleName.split('/').slice(0, 2).join('/')
+            : moduleName.split('/')[0];
+          const uiDependency = moduleName.match(/^@\/components\/ui\/([^/]+)/)?.[1];
+          const installableAliases = ['@/components/ui/', '@/components/'];
+
+          expect(moduleName).not.toMatch(/^@\/app\//);
+          expect(moduleName).not.toMatch(/^@\/registry\//);
+          expect(
+            moduleName === 'react' ||
+              installableAliases.some((prefix) => moduleName.startsWith(prefix)) ||
+              packageName in packageJson.dependencies,
+            `${example.id} imports non-installable module ${moduleName}`
+          ).toBe(true);
+
+          if (uiDependency) uiDependencies.add(uiDependency);
         }
-        const moduleName = statement.moduleSpecifier.text;
-        const packageName = moduleName.startsWith('@')
-          ? moduleName.split('/').slice(0, 2).join('/')
-          : moduleName.split('/')[0];
-        const installableAliases = ['@/components/ui/', '@/components/'];
 
-        expect(moduleName).not.toMatch(/^@\/app\//);
-        expect(moduleName).not.toMatch(/^@\/registry\//);
-        expect(
-          moduleName === 'react' ||
-            installableAliases.some((prefix) => moduleName.startsWith(prefix)) ||
-            packageName in packageJson.dependencies,
-          `${example.id} imports non-installable module ${moduleName}`
-        ).toBe(true);
+        const expectedExtras = [...uiDependencies]
+          .filter((dependency) => !registryDependencies.includes(dependency))
+          .sort();
+        expect(example.extraUiDependencies, `${name}/${example.id} extra UI dependencies`).toEqual(
+          expectedExtras
+        );
+        for (const dependency of uiDependencies) {
+          expect(
+            [...registryDependencies, ...example.extraUiDependencies],
+            `${name}/${example.id} does not declare or render ${dependency}`
+          ).toContain(dependency);
+        }
       }
     }
+  });
+
+  it('renders extra UI dependencies as a copyable install command', () => {
+    const dependencies = phoneInputDocs.examples[0].extraUiDependencies;
+    const command = `npx shadcn@latest add ${dependencies.join(' ')}`;
+    render(<ExampleDependenciesNotice dependencies={dependencies} />);
+
+    expect(screen.getByText('This example also uses')).toBeTruthy();
+    expect(screen.getByText(command)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
   });
 
   it('shows and announces clipboard failures with a stable accessible name', async () => {

@@ -1,6 +1,5 @@
 'use client';
 
-import { cn } from 'cn';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,7 @@ export function CopyButton({
         size="sm"
         variant="outline"
         aria-label={label}
-        className={cn('absolute right-3 z-10', className)}
+        className={className}
         onClick={() => {
           void copy();
         }}

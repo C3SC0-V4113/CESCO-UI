@@ -2,9 +2,26 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CodeBlock } from './code-block';
+import { CopyButton } from './copy-button';
 import { ExamplePreview } from './example-preview';
 
 import type { ComponentExample } from '../_docs/types';
+
+export function ExampleDependenciesNotice({ dependencies }: { dependencies: string[] }) {
+  if (dependencies.length === 0) return null;
+
+  const command = `npx shadcn@latest add ${dependencies.join(' ')}`;
+
+  return (
+    <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <span>This example also uses</span>
+      <code className="rounded bg-muted px-1.5 py-1 font-mono text-xs text-foreground">
+        {command}
+      </code>
+      <CopyButton value={command} />
+    </p>
+  );
+}
 
 export function ExampleCard({ example }: { example: ComponentExample }) {
   return (
@@ -26,7 +43,10 @@ export function ExampleCard({ example }: { example: ComponentExample }) {
           </CardContent>
         </TabsContent>
         <TabsContent value="code">
-          <CodeBlock code={example.source} language="tsx" />
+          <div className="space-y-3">
+            <ExampleDependenciesNotice dependencies={example.extraUiDependencies} />
+            <CodeBlock code={example.source} language="tsx" />
+          </div>
         </TabsContent>
       </Tabs>
       <CardFooter>{example.description}</CardFooter>

@@ -14,25 +14,25 @@ const examples = defineExamples({
   default: {
     title: 'Default',
     description: 'A password field with the default show and hide labels.',
-    source: readExampleSource('password-input/default.tsx', 'password-input'),
+    ...readExampleSource('password-input/default.tsx', 'password-input'),
     preview: <DefaultPreview />,
   },
   disabled: {
     title: 'Disabled',
     description: 'Use the native disabled attribute when the password cannot be changed.',
-    source: readExampleSource('password-input/disabled.tsx', 'password-input'),
+    ...readExampleSource('password-input/disabled.tsx', 'password-input'),
     preview: <DisabledPreview />,
   },
   invalid: {
     title: 'Invalid',
     description: 'Set aria-invalid and connect an error message with aria-describedby.',
-    source: readExampleSource('password-input/invalid.tsx', 'password-input'),
+    ...readExampleSource('password-input/invalid.tsx', 'password-input'),
     preview: <InvalidPreview />,
   },
   'custom-labels': {
     title: 'Custom labels',
     description: 'Override both accessible names for the visibility control.',
-    source: readExampleSource('password-input/custom-labels.tsx', 'password-input'),
+    ...readExampleSource('password-input/custom-labels.tsx', 'password-input'),
     preview: <CustomLabelsPreview />,
   },
 });

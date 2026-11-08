@@ -6,6 +6,7 @@ export type ComponentExample<Id extends string = string> = {
   title: string;
   description: string;
   source: string;
+  extraUiDependencies: string[];
   preview: ReactNode;
 };
 export type ComponentDocs<Id extends string = string> = {

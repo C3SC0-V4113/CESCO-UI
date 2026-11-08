@@ -1,3 +1,4 @@
+import { cn } from 'cn';
 import { cacheLife } from 'next/cache';
 import { codeToHtml } from 'shiki';
 
@@ -23,7 +24,7 @@ export async function CodeBlock({ code, language }: { code: string; language: Co
     <Card size="sm" className="min-w-0">
       <CardContent>
         <div className="relative min-h-7 min-w-0 pr-20">
-          <CopyButton value={code} className={copyButtonPosition} />
+          <CopyButton value={code} className={cn('absolute right-3 z-10', copyButtonPosition)} />
           <ScrollArea className="w-full min-w-0">
             <div
               className="shiki-code min-w-max pb-3 text-sm"
