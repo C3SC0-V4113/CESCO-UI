@@ -1,14 +1,13 @@
 'use client';
 
+import { Field, FieldLabel } from '@/components/ui/field';
 import { PhoneInput } from '@/registry/preview/phone-input';
 
 export default function DisabledExample() {
   return (
-    <div className="grid max-w-sm gap-2">
-      <label htmlFor="phone-disabled" className="text-sm font-medium">
-        Phone number
-      </label>
+    <Field className="max-w-sm">
+      <FieldLabel htmlFor="phone-disabled">Phone number</FieldLabel>
       <PhoneInput id="phone-disabled" disabled />
-    </div>
+    </Field>
   );
 }

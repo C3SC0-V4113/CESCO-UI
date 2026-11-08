@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { PhoneInput } from '@/registry/preview/phone-input';
 
 export default function DefaultExample() {
@@ -10,10 +11,8 @@ export default function DefaultExample() {
 
   return (
     <div className="grid max-w-sm gap-6">
-      <div className="grid gap-2">
-        <label htmlFor="phone-input-all-countries" className="text-sm font-medium">
-          Phone number (all countries)
-        </label>
+      <Field>
+        <FieldLabel htmlFor="phone-input-all-countries">Phone number (all countries)</FieldLabel>
         <PhoneInput
           id="phone-input-all-countries"
           defaultCountry="SV"
@@ -21,14 +20,14 @@ export default function DefaultExample() {
           value={allCountriesValue}
           onChange={setAllCountriesValue}
         />
-        <p aria-live="polite" className="text-sm text-muted-foreground">
+        <FieldDescription aria-live="polite">
           E.164: {allCountriesValue || 'Enter a number'}
-        </p>
-      </div>
-      <div className="grid gap-2">
-        <label htmlFor="phone-input-limited-countries" className="text-sm font-medium">
+        </FieldDescription>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="phone-input-limited-countries">
           Phone number (El Salvador and United States)
-        </label>
+        </FieldLabel>
         <PhoneInput
           id="phone-input-limited-countries"
           defaultCountry="SV"
@@ -36,7 +35,7 @@ export default function DefaultExample() {
           value={limitedCountriesValue}
           onChange={setLimitedCountriesValue}
         />
-      </div>
+      </Field>
     </div>
   );
 }

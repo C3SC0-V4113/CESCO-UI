@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 
 import { ComponentBaseProvider } from '@/app/components/_components/base-context';
+import { Field, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -48,15 +49,15 @@ export function BaseSwitcher({
             <h2 id="preview-heading" className="text-xl font-semibold tracking-tight">
               Preview
             </h2>
-            <label className="flex items-center gap-2 text-sm">
-              <span>Base</span>
+            <Field orientation="horizontal" className="w-fit">
+              <FieldLabel htmlFor="component-base">Base</FieldLabel>
               <Select
                 value={base}
                 onValueChange={(value) => {
                   if (isComponentBase(value)) setBase(value);
                 }}
               >
-                <SelectTrigger aria-label="Select component base">
+                <SelectTrigger id="component-base" aria-label="Select component base">
                   <SelectValue>{bases.find((item) => item.value === base)?.label}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -69,7 +70,7 @@ export function BaseSwitcher({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-            </label>
+            </Field>
           </div>
           {examples[0] && <ExampleCard example={examples[0]} />}
         </div>

@@ -1,14 +1,13 @@
 'use client';
 
+import { Field, FieldLabel } from '@/components/ui/field';
 import { PasswordInput } from '@/registry/preview/password-input';
 
 export default function DisabledExample() {
   return (
-    <div className="grid max-w-sm gap-2">
-      <label htmlFor="password-disabled" className="text-sm font-medium">
-        Disabled password
-      </label>
+    <Field className="max-w-sm">
+      <FieldLabel htmlFor="password-disabled">Disabled password</FieldLabel>
       <PasswordInput id="password-disabled" disabled placeholder="Password is unavailable" />
-    </div>
+    </Field>
   );
 }

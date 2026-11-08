@@ -152,12 +152,13 @@ describe('example source rewrites', () => {
         const packageName = moduleName.startsWith('@')
           ? moduleName.split('/').slice(0, 2).join('/')
           : moduleName.split('/')[0];
+        const installableAliases = ['@/components/ui/', '@/components/'];
 
         expect(moduleName).not.toMatch(/^@\/app\//);
         expect(moduleName).not.toMatch(/^@\/registry\//);
         expect(
           moduleName === 'react' ||
-            moduleName.startsWith('@/components/') ||
+            installableAliases.some((prefix) => moduleName.startsWith(prefix)) ||
             packageName in packageJson.dependencies,
           `${example.id} imports non-installable module ${moduleName}`
         ).toBe(true);

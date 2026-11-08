@@ -1,17 +1,14 @@
 'use client';
 
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { PhoneInput } from '@/registry/preview/phone-input';
 
 export default function InvalidExample() {
   return (
-    <div className="grid max-w-sm gap-2">
-      <label htmlFor="phone-invalid" className="text-sm font-medium">
-        Phone number
-      </label>
+    <Field data-invalid="true" className="max-w-sm">
+      <FieldLabel htmlFor="phone-invalid">Phone number</FieldLabel>
       <PhoneInput id="phone-invalid" aria-invalid="true" aria-describedby="phone-invalid-message" />
-      <p id="phone-invalid-message" className="text-sm text-destructive">
-        Enter a valid phone number.
-      </p>
-    </div>
+      <FieldError id="phone-invalid-message">Enter a valid phone number.</FieldError>
+    </Field>
   );
 }

@@ -1,13 +1,12 @@
 'use client';
 
+import { Field, FieldLabel } from '@/components/ui/field';
 import { PhoneInput } from '@/registry/preview/phone-input';
 
 export default function SpanishLocaleExample() {
   return (
-    <div className="grid max-w-sm gap-2">
-      <label htmlFor="phone-spanish" className="text-sm font-medium">
-        Número de teléfono
-      </label>
+    <Field className="max-w-sm">
+      <FieldLabel htmlFor="phone-spanish">Número de teléfono</FieldLabel>
       <PhoneInput
         id="phone-spanish"
         locale="es"
@@ -17,6 +16,6 @@ export default function SpanishLocaleExample() {
         pinnedGroupLabel="Sugeridos"
         allGroupLabel="Todos los países"
       />
-    </div>
+    </Field>
   );
 }
