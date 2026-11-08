@@ -11,6 +11,9 @@ import { components } from '@/app/registry';
 
 import type { Metadata } from 'next';
 
+export const ensureStatic = 'navigation';
+export const instant = false;
+
 export function generateStaticParams() {
   return components.map(({ name }) => ({ name }));
 }
