@@ -131,7 +131,9 @@
 
 .shiki-code pre {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
+  background-color: transparent !important;
+  white-space: pre;
+  overflow-wrap: normal;
 }
 
 .shiki-code pre span {
@@ -140,7 +142,7 @@
 
 .dark .shiki-code pre {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
+  background-color: transparent !important;
 }
 
 .dark .shiki-code pre span {

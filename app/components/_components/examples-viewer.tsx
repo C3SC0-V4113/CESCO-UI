@@ -9,7 +9,7 @@ import type { ComponentExample } from '../_docs/types';
 export function ExampleCard({ example }: { example: ComponentExample }) {
   return (
     <Card className="min-w-0">
-      <Tabs defaultValue="preview">
+      <Tabs defaultValue="preview" className="w-full min-w-0">
         <CardHeader>
           <div className="flex items-center justify-between gap-3 border-b pb-4">
             <TabsList aria-label="Example view">
@@ -20,7 +20,7 @@ export function ExampleCard({ example }: { example: ComponentExample }) {
         </CardHeader>
         <TabsContent value="preview">
           <CardContent>
-            <div className="min-h-56 p-6">
+            <div className="min-w-0 py-4">
               <ExamplePreview preview={example.preview} />
             </div>
           </CardContent>
@@ -38,9 +38,9 @@ export function ExamplesViewer({ examples }: { examples: ComponentExample[] }) {
   if (examples.length === 0) return null;
 
   return (
-    <div className="min-w-0 overflow-hidden">
-      <Tabs defaultValue={examples[0].id}>
-        <div className="max-w-full overflow-x-auto">
+    <div className="min-w-0">
+      <Tabs defaultValue={examples[0].id} className="w-full min-w-0">
+        <div className="w-full min-w-0 overflow-x-auto">
           <TabsList aria-label="Examples" className="h-auto w-max flex-nowrap justify-start">
             {examples.map((example) => (
               <TabsTrigger key={example.id} value={example.id} className="flex-none">
