@@ -128,3 +128,7 @@
     @apply font-sans;
   }
 }
+
+[data-slot='code-block'][data-copy-action='true'] > [data-slot='code-block-content'] {
+  padding-inline-end: calc(var(--spacing) * 10);
+}

@@ -87,6 +87,19 @@ async function verifyComponentDocs(page: Page, check: ComponentDocsCheck) {
     .getByRole('tabpanel', { name: 'Code' })
     .locator('pre code')
     .last();
+  const codeContent = selectedExamplePanel
+    .getByRole('tabpanel', { name: 'Code' })
+    .locator('[data-slot="code-block-content"]')
+    .last();
+  await expect(codeContent).toHaveAttribute('aria-label', /example$/);
+  await codeContent.locator('..').getByRole('button', { name: 'Copy' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(codeContent).toBeFocused();
+  await expect
+    .poll(() =>
+      codeContent.evaluate((element) => getComputedStyle(element.parentElement!).boxShadow)
+    )
+    .not.toBe('none');
   await expect(code).toContainText(`@/components/${check.component}`);
   await expect(code).not.toContainText('@/registry');
   await expect(code).toContainText(check.exampleCodeMarker);

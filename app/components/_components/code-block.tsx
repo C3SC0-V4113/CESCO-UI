@@ -6,9 +6,7 @@ import {
   CodeBlockActions,
   CodeBlockContent,
   CodeBlockCopyButton,
-  CodeBlockHeader,
   CodeBlockLine,
-  CodeBlockTitle,
 } from '@/components/ui/code-block';
 import { highlightCode } from '@/lib/highlighter';
 
@@ -33,24 +31,19 @@ export async function CodeBlock({
   const lineOccurrences = new Map<string, number>();
 
   return (
-    <ShadcnCodeBlock size={size} className={cn('min-w-0', className)}>
-      <CodeBlockHeader className="sr-only">
-        <CodeBlockTitle>{title}</CodeBlockTitle>
-      </CodeBlockHeader>
+    <ShadcnCodeBlock size={size} data-copy-action="true" className={cn('min-w-0', className)}>
       <CodeBlockActions>
         <CodeBlockCopyButton value={code} />
       </CodeBlockActions>
-      <div className="min-w-0 pr-20">
-        <CodeBlockContent>
-          {lines.map((line, index) => {
-            const text = sourceLines[index] ?? '';
-            const occurrence = lineOccurrences.get(text) ?? 0;
-            lineOccurrences.set(text, occurrence + 1);
+      <CodeBlockContent aria-label={title}>
+        {lines.map((line, index) => {
+          const text = sourceLines[index] ?? '';
+          const occurrence = lineOccurrences.get(text) ?? 0;
+          lineOccurrences.set(text, occurrence + 1);
 
-            return <CodeBlockLine key={`${text}:${occurrence}`}>{line}</CodeBlockLine>;
-          })}
-        </CodeBlockContent>
-      </div>
+          return <CodeBlockLine key={`${text}:${occurrence}`}>{line}</CodeBlockLine>;
+        })}
+      </CodeBlockContent>
     </ShadcnCodeBlock>
   );
 }
