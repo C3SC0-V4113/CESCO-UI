@@ -13,10 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { ExampleCard, ExamplesViewer } from './examples-viewer';
-
 import type { ComponentBase } from './types';
-import type { ComponentExample } from '../_docs/types';
 
 const bases: { value: ComponentBase; label: string }[] = [
   { value: 'base', label: 'Base UI' },
@@ -29,12 +26,14 @@ function isComponentBase(value: string | null): value is ComponentBase {
 }
 
 export function BaseSwitcher({
-  examples,
+  primaryExample,
+  additionalExamples,
   installation,
   usage,
   api,
 }: {
-  examples: ComponentExample[];
+  primaryExample: ReactNode;
+  additionalExamples: ReactNode;
   installation: ReactNode;
   usage: ReactNode;
   api: ReactNode;
@@ -72,18 +71,11 @@ export function BaseSwitcher({
               </Select>
             </Field>
           </div>
-          {examples[0] && <ExampleCard example={examples[0]} />}
+          {primaryExample}
         </div>
         {installation}
         {usage}
-        {examples.length > 1 && (
-          <section aria-labelledby="examples-heading" className="min-w-0 space-y-4">
-            <h2 id="examples-heading" className="text-xl font-semibold tracking-tight">
-              Examples
-            </h2>
-            <ExamplesViewer examples={examples.slice(1)} />
-          </section>
-        )}
+        {additionalExamples}
         {api}
       </div>
     </ComponentBaseProvider>

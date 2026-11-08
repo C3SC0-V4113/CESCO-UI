@@ -128,3 +128,21 @@
     @apply font-sans;
   }
 }
+
+.shiki-code pre {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+.shiki-code pre span {
+  color: var(--shiki-light);
+}
+
+.dark .shiki-code pre {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+.dark .shiki-code pre span {
+  color: var(--shiki-dark);
+}

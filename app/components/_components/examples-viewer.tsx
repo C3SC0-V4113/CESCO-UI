@@ -1,9 +1,7 @@
-'use client';
-
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { CopyButton } from './copy-button';
+import { CodeBlock } from './code-block';
 import { ExamplePreview } from './example-preview';
 
 import type { ComponentExample } from '../_docs/types';
@@ -18,7 +16,6 @@ export function ExampleCard({ example }: { example: ComponentExample }) {
               <TabsTrigger value="preview">Preview</TabsTrigger>
               <TabsTrigger value="code">Code</TabsTrigger>
             </TabsList>
-            <CopyButton value={example.source} />
           </div>
         </CardHeader>
         <TabsContent value="preview">
@@ -29,9 +26,7 @@ export function ExampleCard({ example }: { example: ComponentExample }) {
           </CardContent>
         </TabsContent>
         <TabsContent value="code">
-          <pre className="max-h-[32rem] max-w-full overflow-auto p-5 text-sm">
-            <code>{example.source}</code>
-          </pre>
+          <CodeBlock code={example.source} language="tsx" />
         </TabsContent>
       </Tabs>
       <CardFooter>{example.description}</CardFooter>

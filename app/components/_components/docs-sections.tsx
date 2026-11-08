@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { CopyButton } from './copy-button';
+import { CodeBlock } from './code-block';
 
 import type { ApiProp } from '../_docs/types';
 
@@ -19,20 +19,18 @@ export function InstallationSection({ name }: { name: string }) {
       <h2 id="installation-heading" className="text-xl font-semibold tracking-tight">
         Installation
       </h2>
-      <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-4">
-        <code className="overflow-x-auto text-sm">{command}</code>
-        <CopyButton value={command} />
-      </div>
+      <CodeBlock code={command} language="bash" />
       <p className="text-sm text-muted-foreground">
         Add the Cesco registry to <code>components.json</code>:
       </p>
-      <pre className="max-w-full overflow-auto rounded-lg border bg-muted/40 p-4 text-sm">
-        <code>{`{
+      <CodeBlock
+        code={`{
   "registries": {
     "@cesco": "https://ui.cescovalle.com/r/{style}/{name}.json"
   }
-}`}</code>
-      </pre>
+}`}
+        language="json"
+      />
     </section>
   );
 }
@@ -43,9 +41,7 @@ export function UsageSection({ usage }: { usage: string }) {
       <h2 id="usage-heading" className="text-xl font-semibold tracking-tight">
         Usage
       </h2>
-      <pre className="max-w-full overflow-auto rounded-lg border bg-muted/40 p-4 text-sm">
-        <code>{usage}</code>
-      </pre>
+      <CodeBlock code={usage} language="tsx" />
     </section>
   );
 }
