@@ -31,6 +31,19 @@ async function verifyComponentDocs(page: Page, check: ComponentDocsCheck) {
   await expect(page.getByLabel('Select component base')).toBeVisible();
   await expect(page.locator('[data-preview-hydrated="true"]').first()).toBeVisible();
 
+  const managerTabs = page.getByRole('tablist', { name: 'Package manager' });
+  for (const { manager, command } of [
+    { manager: 'pnpm', command: `pnpm dlx shadcn@latest add @cesco/${check.component}` },
+    { manager: 'npm', command: `npx shadcn@latest add @cesco/${check.component}` },
+    { manager: 'yarn', command: `yarn dlx shadcn@latest add @cesco/${check.component}` },
+    { manager: 'bun', command: `bunx --bun shadcn@latest add @cesco/${check.component}` },
+  ]) {
+    await managerTabs.getByRole('tab', { name: manager, exact: true }).click();
+    await expect(page.getByRole('tabpanel', { name: manager }).locator('pre code')).toContainText(
+      command
+    );
+  }
+
   const defaultInput = page.locator(check.inputSelector);
   await expect(defaultInput).toBeVisible();
   await check.waitUntilInteractive(page);

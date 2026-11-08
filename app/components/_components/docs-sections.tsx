@@ -7,19 +7,38 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CodeBlock } from './code-block';
 
 import type { ApiProp } from '../_docs/types';
 
 export function InstallationSection({ name }: { name: string }) {
-  const command = `npx shadcn@latest add @cesco/${name}`;
+  const commands = [
+    { value: 'pnpm', label: 'pnpm', command: `pnpm dlx shadcn@latest add @cesco/${name}` },
+    { value: 'npm', label: 'npm', command: `npx shadcn@latest add @cesco/${name}` },
+    { value: 'yarn', label: 'yarn', command: `yarn dlx shadcn@latest add @cesco/${name}` },
+    { value: 'bun', label: 'bun', command: `bunx --bun shadcn@latest add @cesco/${name}` },
+  ] as const;
   return (
     <section aria-labelledby="installation-heading" className="min-w-0 space-y-4">
       <h2 id="installation-heading" className="text-xl font-semibold tracking-tight">
         Installation
       </h2>
-      <CodeBlock code={command} language="bash" />
+      <Tabs defaultValue="npm">
+        <TabsList aria-label="Package manager">
+          {commands.map(({ value, label }) => (
+            <TabsTrigger key={value} value={value}>
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {commands.map(({ value, command }) => (
+          <TabsContent key={value} value={value}>
+            <CodeBlock code={command} language="bash" />
+          </TabsContent>
+        ))}
+      </Tabs>
       <p className="text-sm text-muted-foreground">
         Add the Cesco registry to <code>components.json</code>:
       </p>
