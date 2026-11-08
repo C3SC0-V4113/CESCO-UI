@@ -1,6 +1,22 @@
 import Link from 'next/link';
 
 import { components } from '@/app/registry';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item';
+
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Cesco UI | Component Registry',
+  description: 'Components designed to work across Base UI, Radix, and React Aria.',
+};
 
 export default function Home() {
   return (
@@ -11,25 +27,32 @@ export default function Home() {
         Components designed to work across Base UI, Radix, and React Aria.
       </p>
       {components.length ? (
-        <ul className="mt-8 divide-y rounded-lg border">
+        <ItemGroup className="mt-8">
           {components.map(({ name, title, description }) => (
-            <li key={name}>
-              <Link className="block p-5 hover:bg-accent" href={`/components/${name}`}>
-                <h2 className="font-medium">{title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-              </Link>
-            </li>
+            <Item key={name} variant="outline" render={<Link href={`/components/${name}`} />}>
+              <ItemContent>
+                <ItemTitle>{title}</ItemTitle>
+                <ItemDescription>{description}</ItemDescription>
+              </ItemContent>
+            </Item>
           ))}
-        </ul>
+        </ItemGroup>
       ) : (
-        <section aria-labelledby="empty-title" className="mt-8 rounded-lg border bg-card p-6">
-          <h2 id="empty-title" className="font-medium">
-            No components yet
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Registry components will appear here when they are added.
-          </p>
-        </section>
+        <Empty className="mt-8">
+          <EmptyHeader>
+            <EmptyTitle role="heading" aria-level={2}>
+              No components yet
+            </EmptyTitle>
+            <EmptyDescription>
+              Registry components will appear here when they are added.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" render={<Link href="/" />}>
+              Browse components
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   );
