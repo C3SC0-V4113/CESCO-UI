@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('shows the registry home heading', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: 'Component registry' })).toBeVisible();
 });
@@ -35,4 +35,14 @@ test('opens mobile navigation and closes it after navigating', async ({ page }) 
   await navigation.getByRole('link', { name: 'Phone Input' }).click();
   await expect(page).toHaveURL(/\/components\/phone-input$/);
   await expect(navigation).toBeHidden();
+});
+
+test('unknown component routes return the styled 404 page', async ({ page }) => {
+  for (const path of ['/components/does-not-exist', '/components/password-input/extra']) {
+    const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
+
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: 'Component not found' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Registry components' })).toBeVisible();
+  }
 });

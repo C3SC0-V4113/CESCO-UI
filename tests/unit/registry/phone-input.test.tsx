@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getCountries } from 'libphonenumber-js';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -8,11 +8,11 @@ import { PhoneInput as Radix } from '@/registry/bases/radix/phone-input/phone-in
 import { countryFlagLoaders } from '@/registry/shared/lib/country-flag-loaders';
 import { deriveFromValue, getCountryOptions, toE164 } from '@/registry/shared/lib/phone';
 
-async function waitForCountryFlag() {
-  await waitFor(() => {
-    // eslint-disable-next-line testing-library/no-node-access -- Verify the public data-slot emitted by the registry component.
-    expect(document.querySelector('[data-slot="country-flag"]')).not.toBeNull();
-  });
+// Lets tests find components by their public data-slot attribute.
+configure({ testIdAttribute: 'data-slot' });
+
+function waitForCountryFlag() {
+  return screen.findByTestId('country-flag', undefined, { timeout: 5000 });
 }
 
 describe('phone helpers', () => {
@@ -169,7 +169,8 @@ describe.each([
   });
   it('loads the selected flag on demand', async () => {
     render(<PhoneInput value="" onChange={vi.fn()} defaultCountry="SV" />);
-    expect(await waitForCountryFlag()).not.toBeNull();
+    const flag = await waitForCountryFlag();
+    expect(flag.style.getPropertyValue('--country-flag-image')).toContain('data:image/svg+xml');
   });
   it('defaults to the US and exposes an overridable country label', () => {
     const { rerender } = render(<PhoneInput value="" onChange={vi.fn()} />);
