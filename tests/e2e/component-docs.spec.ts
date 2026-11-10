@@ -11,10 +11,10 @@ const pages = [
     name: 'password-input',
     title: 'Password Input',
     input: '#password-default',
-    example: '#example-default',
+    example: '#example-disabled',
     codeMarker: '@/components/password-input',
     apiRow: 'InputGroupInput attributes',
-    examples: ['Default', 'Disabled', 'Invalid', 'Custom labels', 'With Field'],
+    examples: ['Disabled', 'Invalid', 'Custom labels', 'With Field'],
   },
   {
     name: 'phone-input',
@@ -24,7 +24,6 @@ const pages = [
     codeMarker: '@/components/phone-input',
     apiRow: 'defaultCountry',
     examples: [
-      'Default',
       'Default country',
       'Disabled',
       'Invalid',
@@ -59,9 +58,32 @@ for (const component of pages) {
         expect(target).toMatch(/^#/);
         await expect(page.locator(target!)).toHaveCount(1);
       }
+      const ids = await page
+        .locator('[id]')
+        .evaluateAll((elements) => elements.map((element) => element.id));
+      expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
 
       await toc.getByRole('link', { name: 'Installation' }).click();
       await expect(page).toHaveURL(/#installation$/);
+      await expect(toc.getByRole('link', { name: 'Installation' })).toHaveAttribute(
+        'aria-current',
+        'location'
+      );
+
+      const packageCommands = [
+        ['npm', `npx shadcn@latest add @cesco/${component.name}`],
+        ['pnpm', `pnpm dlx shadcn@latest add @cesco/${component.name}`],
+        ['yarn', `yarn dlx shadcn@latest add @cesco/${component.name}`],
+        ['bun', `bunx --bun shadcn@latest add @cesco/${component.name}`],
+      ] as const;
+      for (const [manager, command] of packageCommands) {
+        await page.getByRole('tab', { name: manager, exact: true }).click();
+        await expect(
+          page.locator(
+            `#installation [data-slot="code-block-content"][aria-label="${manager} install command"]`
+          )
+        ).toContainText(command);
+      }
 
       for (const title of component.examples) {
         await expect(
@@ -71,18 +93,33 @@ for (const component of pages) {
       const example = page.locator(component.example);
       await expect(example.getByRole('heading', { level: 3 })).toBeVisible();
       const viewCode = example.getByRole('button', { name: 'View Code' });
+      await expect(viewCode).toHaveAttribute('aria-expanded', 'false');
       await viewCode.click();
+      const hideCode = example.getByRole('button', { name: 'Hide Code' });
+      await expect(hideCode).toHaveAttribute('aria-expanded', 'true');
       const code = example.locator('[data-slot="code-block-content"]');
       await expect(code).toBeVisible();
       await expect(code).toContainText(component.codeMarker);
+      await hideCode.click();
+      await expect(example.getByRole('button', { name: 'View Code' })).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
 
       await page.getByRole('row', { name: new RegExp(component.apiRow) }).waitFor();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expect(toc.getByRole('link', { name: 'API Reference' })).toHaveAttribute(
+        'aria-current',
+        'location'
+      );
     });
   }
 }
 
 test('legacy component URLs permanently redirect to the Base UI route', async ({ request }) => {
-  const response = await request.get('/components/password-input', { maxRedirects: 0 });
-  expect(response.status()).toBe(308);
-  expect(response.headers().location).toContain('/components/base/password-input');
+  for (const name of ['password-input', 'phone-input']) {
+    const response = await request.get(`/components/${name}`, { maxRedirects: 0 });
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toBe(`/components/base/${name}`);
+  }
 });

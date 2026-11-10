@@ -87,7 +87,7 @@ export function PasswordInputDocsPage({ base }: { base: ComponentBase }) {
     { id: 'installation', title: 'Installation' },
     { id: 'usage', title: 'Usage' },
     { id: 'examples', title: 'Examples' },
-    ...examples.map(({ id, title }) => ({ id: `example-${id}`, title })),
+    ...examples.slice(1).map(({ id, title }) => ({ id: `example-${id}`, title })),
     { id: 'api-reference', title: 'API Reference' },
   ];
 
@@ -104,7 +104,7 @@ export function PasswordInputDocsPage({ base }: { base: ComponentBase }) {
       <UsageSection
         usage={`import { PasswordInput } from '@/components/password-input';\n\n<PasswordInput id="password" autoComplete="current-password" />`}
       />
-      <ExamplesSection examples={examples} />
+      <ExamplesSection examples={examples.slice(1)} />
       <ApiReference props={passwordInputApi} />
     </ComponentDocPage>
   );

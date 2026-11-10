@@ -120,7 +120,7 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
     { id: 'installation', title: 'Installation' },
     { id: 'usage', title: 'Usage' },
     { id: 'examples', title: 'Examples' },
-    ...examples.map(({ id, title }) => ({ id: `example-${id}`, title })),
+    ...examples.slice(1).map(({ id, title }) => ({ id: `example-${id}`, title })),
     { id: 'api-reference', title: 'API Reference' },
   ];
 
@@ -137,7 +137,7 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
       <UsageSection
         usage={`import { PhoneInput } from '@/components/phone-input';\n\n<PhoneInput defaultCountry="US" onChange={(value) => console.log(value)} />`}
       />
-      <ExamplesSection examples={examples} />
+      <ExamplesSection examples={examples.slice(1)} />
       <ApiReference props={phoneInputApi} />
     </ComponentDocPage>
   );
