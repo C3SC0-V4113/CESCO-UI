@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { componentBaseFromPathname } from '@/app/components/_docs/routes';
 import { components } from '@/app/registry';
 import {
   Sidebar,
@@ -19,6 +20,7 @@ import {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const base = componentBaseFromPathname(pathname);
   const { isMobile, setOpenMobile } = useSidebar();
 
   return (
@@ -37,7 +39,7 @@ export function AppSidebar() {
               {components.length ? (
                 <SidebarMenu>
                   {components.map((component) => {
-                    const href = `/components/${component.name}`;
+                    const href = `/components/${base}/${component.name}`;
                     const isActive = pathname === href;
 
                     return (
