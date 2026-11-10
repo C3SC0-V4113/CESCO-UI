@@ -2,21 +2,22 @@
 
 import { useState } from 'react';
 
-import { Field, FieldLabel } from '@/components/ui/field';
-import { PasswordInput } from '@/registry/preview/password-input';
+import { PasswordInput } from '@/components/password-input';
 
 export default function DefaultExample() {
   const [value, setValue] = useState('');
 
   return (
-    <Field className="max-w-sm">
-      <FieldLabel htmlFor="password-default">Password</FieldLabel>
+    <div className="grid max-w-sm gap-2">
+      <label htmlFor="password-default" className="text-sm font-medium">
+        Password
+      </label>
       <PasswordInput
         id="password-default"
         autoComplete="current-password"
         value={value}
         onChange={(event) => setValue(event.target.value)}
       />
-    </Field>
+    </div>
   );
 }

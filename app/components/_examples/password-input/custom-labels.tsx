@@ -1,17 +1,18 @@
 'use client';
 
-import { Field, FieldLabel } from '@/components/ui/field';
-import { PasswordInput } from '@/registry/preview/password-input';
+import { PasswordInput } from '@/components/password-input';
 
 export default function CustomLabelsExample() {
   return (
-    <Field className="max-w-sm">
-      <FieldLabel htmlFor="password-custom">Account secret</FieldLabel>
+    <div className="grid max-w-sm gap-2">
+      <label htmlFor="password-custom" className="text-sm font-medium">
+        Account secret
+      </label>
       <PasswordInput
         id="password-custom"
         showLabel="Reveal account secret"
         hideLabel="Conceal account secret"
       />
-    </Field>
+    </div>
   );
 }

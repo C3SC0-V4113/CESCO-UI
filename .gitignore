@@ -42,3 +42,4 @@ blob-report/
 # registry build output (npm run registry:build)
 /public/r/
 /.registry-build/
+/app/components/_examples/generated/
