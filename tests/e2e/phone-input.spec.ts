@@ -20,7 +20,11 @@ for (const base of [
     const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
     await expect(preview).toBeVisible();
     await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
-    const countryTrigger = page.locator('[aria-label="Country"]').nth(1);
+    const countryTrigger = preview.locator(
+      base.value === 'aria'
+        ? '[data-slot="phone-country-combobox"] [data-slot="combobox-trigger"]'
+        : '[aria-label="Country"]'
+    );
     await countryTrigger.click();
     const countrySearch = page.getByPlaceholder('Search country');
     await expect(countryTrigger).toHaveAttribute('aria-expanded', 'true');

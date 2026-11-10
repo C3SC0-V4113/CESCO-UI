@@ -250,6 +250,29 @@ describe.each([
     expect(screen.queryByText('Suggested')).toBeNull();
     expect(screen.queryAllByRole('separator')).toHaveLength(0);
   });
+  it('searches for and selects a country', async () => {
+    render(
+      <PhoneInput
+        value=""
+        onChange={vi.fn()}
+        countries={['US', 'SV', 'AR']}
+        pinnedCountries={['US']}
+        countryLabel="Country selector"
+      />
+    );
+    await waitForCountryFlag();
+    openCountryPicker();
+    fireEvent.change(screen.getByPlaceholderText('Search country'), {
+      target: { value: 'Argent' },
+    });
+    const argentina = screen.getByRole('option', { name: /Argentina/ });
+    expect(argentina).toBeTruthy();
+    fireEvent.click(argentina);
+    expect(
+      screen.getByRole(_base === 'aria' ? 'button' : 'combobox', { name: 'Country selector' })
+        .textContent
+    ).toContain('+54');
+  });
   it('does not restore formatting characters when deleting', () => {
     render(<PhoneInput value="+15025551234" onChange={vi.fn()} />);
     const input = screen.getByRole('textbox');
