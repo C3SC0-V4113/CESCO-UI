@@ -22,6 +22,31 @@ const previews = {
     radix: lazy(() => import('../_examples/radix/phone-input/default')),
     aria: lazy(() => import('../_examples/aria/phone-input/default')),
   },
+  'default-country': {
+    base: lazy(() => import('../_examples/base/phone-input/default-country')),
+    radix: lazy(() => import('../_examples/radix/phone-input/default-country')),
+    aria: lazy(() => import('../_examples/aria/phone-input/default-country')),
+  },
+  disabled: {
+    base: lazy(() => import('../_examples/base/phone-input/disabled')),
+    radix: lazy(() => import('../_examples/radix/phone-input/disabled')),
+    aria: lazy(() => import('../_examples/aria/phone-input/disabled')),
+  },
+  invalid: {
+    base: lazy(() => import('../_examples/base/phone-input/invalid')),
+    radix: lazy(() => import('../_examples/radix/phone-input/invalid')),
+    aria: lazy(() => import('../_examples/aria/phone-input/invalid')),
+  },
+  'pinned-countries': {
+    base: lazy(() => import('../_examples/base/phone-input/pinned-countries')),
+    radix: lazy(() => import('../_examples/radix/phone-input/pinned-countries')),
+    aria: lazy(() => import('../_examples/aria/phone-input/pinned-countries')),
+  },
+  'spanish-locale': {
+    base: lazy(() => import('../_examples/base/phone-input/spanish-locale')),
+    radix: lazy(() => import('../_examples/radix/phone-input/spanish-locale')),
+    aria: lazy(() => import('../_examples/aria/phone-input/spanish-locale')),
+  },
   'restricted-countries': {
     base: lazy(() => import('../_examples/base/phone-input/restricted-countries')),
     radix: lazy(() => import('../_examples/radix/phone-input/restricted-countries')),
@@ -46,11 +71,41 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
       source: readExampleSource(base, 'phone-input', 'default.tsx'),
       preview: renderPreview(previews.default),
     },
+    'default-country': {
+      title: 'Default country',
+      description: 'Set the country whose dialing code and national format are used initially.',
+      source: readExampleSource(base, 'phone-input', 'default-country.tsx'),
+      preview: renderPreview(previews['default-country']),
+    },
+    disabled: {
+      title: 'Disabled',
+      description: 'Disable the phone field when it cannot be changed.',
+      source: readExampleSource(base, 'phone-input', 'disabled.tsx'),
+      preview: renderPreview(previews.disabled),
+    },
+    invalid: {
+      title: 'Invalid',
+      description: 'Expose an invalid state and connect the validation message.',
+      source: readExampleSource(base, 'phone-input', 'invalid.tsx'),
+      preview: renderPreview(previews.invalid),
+    },
     'restricted-countries': {
       title: 'Restricted countries',
       description: 'Limit the picker to the countries supported by a form or workflow.',
       source: readExampleSource(base, 'phone-input', 'restricted-countries.tsx'),
       preview: renderPreview(previews['restricted-countries']),
+    },
+    'pinned-countries': {
+      title: 'Pinned countries',
+      description: 'Keep frequently used countries in the suggested group.',
+      source: readExampleSource(base, 'phone-input', 'pinned-countries.tsx'),
+      preview: renderPreview(previews['pinned-countries']),
+    },
+    'spanish-locale': {
+      title: 'Spanish locale',
+      description: 'Localize the country names, search prompt, and picker group labels.',
+      source: readExampleSource(base, 'phone-input', 'spanish-locale.tsx'),
+      preview: renderPreview(previews['spanish-locale']),
     },
     'with-field': {
       title: 'With Field',

@@ -147,7 +147,16 @@ describe('per-base example imports', () => {
       'invalid.tsx',
       'with-field.tsx',
     ],
-    'phone-input': ['default.tsx', 'restricted-countries.tsx', 'with-field.tsx'],
+    'phone-input': [
+      'default-country.tsx',
+      'default.tsx',
+      'disabled.tsx',
+      'invalid.tsx',
+      'pinned-countries.tsx',
+      'restricted-countries.tsx',
+      'spanish-locale.tsx',
+      'with-field.tsx',
+    ],
   };
 
   it('keeps all examples in sync across bases and shows installable imports', () => {

@@ -23,7 +23,16 @@ const pages = [
     example: '#example-restricted-countries',
     codeMarker: '@/components/phone-input',
     apiRow: 'defaultCountry',
-    examples: ['Default', 'Restricted countries', 'With Field'],
+    examples: [
+      'Default',
+      'Default country',
+      'Disabled',
+      'Invalid',
+      'Restricted countries',
+      'Pinned countries',
+      'Spanish locale',
+      'With Field',
+    ],
   },
 ] as const;
 
