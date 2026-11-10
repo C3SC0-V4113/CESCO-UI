@@ -22,7 +22,7 @@ for (const base of [
     await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
     const countryTrigger = preview.locator(
       base.value === 'aria'
-        ? '[data-slot="phone-country-combobox"] [data-slot="combobox-trigger"]'
+        ? '[data-slot="phone-country-select-trigger"]'
         : '[aria-label="Country"]'
     );
     await countryTrigger.click();
@@ -33,8 +33,8 @@ for (const base of [
     await page.getByRole('option', { name: /United States \+1/ }).click();
     await expect(countryTrigger).toContainText('+1');
     await page.keyboard.press('Escape');
-    await page.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
-    await expect(page.getByText('E.164: +50374920123')).toBeVisible();
+    await preview.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
+    await expect(page.getByText('E.164: +174920123')).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 }
