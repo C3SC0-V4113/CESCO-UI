@@ -1,151 +1,144 @@
-import { lazy } from 'react';
+import { lazy, type ComponentType } from 'react';
 
+import { ComponentDocPage } from '@/app/components/_components/component-doc-page';
+import {
+  ApiReference,
+  ComponentPreview,
+  ExamplesSection,
+  InstallationSection,
+  UsageSection,
+} from '@/app/components/_components/docs-sections';
+
+import { phoneInputApi } from './api';
 import { readExampleSource } from './code';
 import { defineExamples } from './types';
 
-import type { ComponentDocs } from './types';
+import type { PageSectionLink } from '@/app/components/_components/on-this-page';
+import type { ComponentBase } from '@/app/components/_components/types';
 
-const DefaultPreview = lazy(() => import('../_examples/phone-input/default'));
-const DefaultCountryPreview = lazy(() => import('../_examples/phone-input/default-country'));
-const LimitedCountriesPreview = lazy(() => import('../_examples/phone-input/limited-countries'));
-const PinnedCountriesPreview = lazy(() => import('../_examples/phone-input/pinned-countries'));
-const SpanishLocalePreview = lazy(() => import('../_examples/phone-input/spanish-locale'));
-const InvalidPreview = lazy(() => import('../_examples/phone-input/invalid'));
-const DisabledPreview = lazy(() => import('../_examples/phone-input/disabled'));
-
-const examples = defineExamples({
+const previews = {
   default: {
-    title: 'Default',
-    description: 'Formats a national number while exposing the E.164 value.',
-    ...readExampleSource('phone-input/default.tsx', 'phone-input'),
-    preview: <DefaultPreview />,
+    base: lazy(() => import('../_examples/base/phone-input/default')),
+    radix: lazy(() => import('../_examples/radix/phone-input/default')),
+    aria: lazy(() => import('../_examples/aria/phone-input/default')),
   },
   'default-country': {
-    title: 'Default country',
-    description: 'Choose the country shown when the field starts empty.',
-    ...readExampleSource('phone-input/default-country.tsx', 'phone-input'),
-    preview: <DefaultCountryPreview />,
-  },
-  'limited-countries': {
-    title: 'Limited countries',
-    description: 'Restrict the country picker to an explicit set.',
-    ...readExampleSource('phone-input/limited-countries.tsx', 'phone-input'),
-    preview: <LimitedCountriesPreview />,
-  },
-  'pinned-countries': {
-    title: 'Pinned countries',
-    description: 'Keep frequently used countries at the top of the picker.',
-    ...readExampleSource('phone-input/pinned-countries.tsx', 'phone-input'),
-    preview: <PinnedCountriesPreview />,
-  },
-  'spanish-locale': {
-    title: 'Spanish locale',
-    description: 'Localize country names and the picker labels.',
-    ...readExampleSource('phone-input/spanish-locale.tsx', 'phone-input'),
-    preview: <SpanishLocalePreview />,
-  },
-  invalid: {
-    title: 'Invalid',
-    description: 'Use aria-invalid with an associated validation message.',
-    ...readExampleSource('phone-input/invalid.tsx', 'phone-input'),
-    preview: <InvalidPreview />,
+    base: lazy(() => import('../_examples/base/phone-input/default-country')),
+    radix: lazy(() => import('../_examples/radix/phone-input/default-country')),
+    aria: lazy(() => import('../_examples/aria/phone-input/default-country')),
   },
   disabled: {
-    title: 'Disabled',
-    description: 'Disable the phone field and its country picker together.',
-    ...readExampleSource('phone-input/disabled.tsx', 'phone-input'),
-    preview: <DisabledPreview />,
+    base: lazy(() => import('../_examples/base/phone-input/disabled')),
+    radix: lazy(() => import('../_examples/radix/phone-input/disabled')),
+    aria: lazy(() => import('../_examples/aria/phone-input/disabled')),
   },
-});
+  invalid: {
+    base: lazy(() => import('../_examples/base/phone-input/invalid')),
+    radix: lazy(() => import('../_examples/radix/phone-input/invalid')),
+    aria: lazy(() => import('../_examples/aria/phone-input/invalid')),
+  },
+  'pinned-countries': {
+    base: lazy(() => import('../_examples/base/phone-input/pinned-countries')),
+    radix: lazy(() => import('../_examples/radix/phone-input/pinned-countries')),
+    aria: lazy(() => import('../_examples/aria/phone-input/pinned-countries')),
+  },
+  'spanish-locale': {
+    base: lazy(() => import('../_examples/base/phone-input/spanish-locale')),
+    radix: lazy(() => import('../_examples/radix/phone-input/spanish-locale')),
+    aria: lazy(() => import('../_examples/aria/phone-input/spanish-locale')),
+  },
+  'restricted-countries': {
+    base: lazy(() => import('../_examples/base/phone-input/restricted-countries')),
+    radix: lazy(() => import('../_examples/radix/phone-input/restricted-countries')),
+    aria: lazy(() => import('../_examples/aria/phone-input/restricted-countries')),
+  },
+  'with-field': {
+    base: lazy(() => import('../_examples/base/phone-input/with-field')),
+    radix: lazy(() => import('../_examples/radix/phone-input/with-field')),
+    aria: lazy(() => import('../_examples/aria/phone-input/with-field')),
+  },
+};
 
-export const phoneInputDocs = {
-  usage: `import { PhoneInput } from '@/components/phone-input';\n\n<PhoneInput defaultCountry="US" onChange={(value) => console.log(value)} />`,
-  examples,
-  api: [
-    {
-      name: 'value',
-      type: 'string',
-      defaultValue: 'undefined',
-      description: 'Controlled E.164 phone number.',
+export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
+  const renderPreview = (variants: Record<ComponentBase, ComponentType>) => {
+    const Preview = variants[base];
+    return <Preview />;
+  };
+  const examples = defineExamples({
+    default: {
+      title: 'Default',
+      description: 'Format a national number while exposing its E.164 value.',
+      source: readExampleSource(base, 'phone-input', 'default.tsx'),
+      preview: renderPreview(previews.default),
     },
-    {
-      name: 'onChange',
-      type: '(value: string) => void',
-      defaultValue: 'undefined',
-      description: 'Called with the formatted E.164 value.',
+    'default-country': {
+      title: 'Default country',
+      description: 'Set the country whose dialing code and national format are used initially.',
+      source: readExampleSource(base, 'phone-input', 'default-country.tsx'),
+      preview: renderPreview(previews['default-country']),
     },
-    {
-      name: 'defaultCountry',
-      type: 'CountryCode',
-      defaultValue: '"US"',
-      description: 'Initial country used to format national digits.',
+    disabled: {
+      title: 'Disabled',
+      description: 'Disable the phone field when it cannot be changed.',
+      source: readExampleSource(base, 'phone-input', 'disabled.tsx'),
+      preview: renderPreview(previews.disabled),
     },
-    {
-      name: 'countries',
-      type: 'CountryCode[]',
-      defaultValue: 'all countries',
-      description: 'Countries available in the picker.',
+    invalid: {
+      title: 'Invalid',
+      description: 'Expose an invalid state and connect the validation message.',
+      source: readExampleSource(base, 'phone-input', 'invalid.tsx'),
+      preview: renderPreview(previews.invalid),
     },
-    {
-      name: 'pinnedCountries',
-      type: 'CountryCode[]',
-      defaultValue: '[]',
-      description: 'Countries shown in the suggested group.',
+    'restricted-countries': {
+      title: 'Restricted countries',
+      description: 'Limit the picker to the countries supported by a form or workflow.',
+      source: readExampleSource(base, 'phone-input', 'restricted-countries.tsx'),
+      preview: renderPreview(previews['restricted-countries']),
     },
-    {
-      name: 'locale',
-      type: 'string',
-      defaultValue: '"en"',
-      description: 'Locale used for country names and default picker labels.',
+    'pinned-countries': {
+      title: 'Pinned countries',
+      description: 'Keep frequently used countries in the suggested group.',
+      source: readExampleSource(base, 'phone-input', 'pinned-countries.tsx'),
+      preview: renderPreview(previews['pinned-countries']),
     },
-    {
-      name: 'countryLabel',
-      type: 'string',
-      defaultValue: '"Country"',
-      description: 'Accessible name of the country picker.',
+    'spanish-locale': {
+      title: 'Spanish locale',
+      description: 'Localize the country names, search prompt, and picker group labels.',
+      source: readExampleSource(base, 'phone-input', 'spanish-locale.tsx'),
+      preview: renderPreview(previews['spanish-locale']),
     },
-    {
-      name: 'searchPlaceholder',
-      type: 'string',
-      defaultValue: '"Search country"',
-      description: 'Placeholder for the country search field.',
-    },
-    {
-      name: 'emptyMessage',
-      type: 'string',
-      defaultValue: '"No results"',
-      description: 'Message shown when country search has no matches.',
-    },
-    {
-      name: 'pinnedGroupLabel',
-      type: 'string',
-      defaultValue: '"Suggested"',
-      description: 'Heading for pinned countries.',
-    },
-    {
-      name: 'allGroupLabel',
-      type: 'string',
-      defaultValue: '"All countries"',
-      description: 'Heading for the complete country list.',
-    },
-    {
-      name: 'placeholder',
-      type: 'string',
-      defaultValue: '"Phone number"',
-      description: 'Placeholder for the phone number input.',
-    },
-    {
-      name: 'ref',
-      type: 'Ref<HTMLInputElement>',
-      defaultValue: 'undefined',
-      description: 'Ref forwarded to the phone number input.',
-    },
-    {
-      name: 'InputHTMLAttributes',
-      type: 'InputHTMLAttributes<HTMLInputElement> (except value, onChange, defaultValue)',
-      defaultValue: '—',
+    'with-field': {
+      title: 'With Field',
       description:
-        'Accepts standard input props such as id, disabled, className, and ARIA attributes.',
+        'Compose the input with shadcn Field primitives. Add Field first with `npx shadcn@latest add field`.',
+      source: readExampleSource(base, 'phone-input', 'with-field.tsx'),
+      preview: renderPreview(previews['with-field']),
     },
-  ],
-} satisfies ComponentDocs<(typeof examples)[number]['id']>;
+  });
+  const sections: PageSectionLink[] = [
+    { id: 'preview', title: 'Preview' },
+    { id: 'installation', title: 'Installation' },
+    { id: 'usage', title: 'Usage' },
+    { id: 'examples', title: 'Examples' },
+    ...examples.slice(1).map(({ id, title }) => ({ id: `example-${id}`, title })),
+    { id: 'api-reference', title: 'API Reference' },
+  ];
+
+  return (
+    <ComponentDocPage
+      name="phone-input"
+      title="Phone Input"
+      description="A country-aware phone input that formats numbers as you type and emits E.164 values."
+      base={base}
+      sections={sections}
+    >
+      <ComponentPreview example={examples[0]} />
+      <InstallationSection name="phone-input" />
+      <UsageSection
+        usage={`import { PhoneInput } from '@/components/phone-input';\n\n<PhoneInput defaultCountry="US" onChange={(value) => console.log(value)} />`}
+      />
+      <ExamplesSection examples={examples.slice(1)} />
+      <ApiReference props={phoneInputApi} />
+    </ComponentDocPage>
+  );
+}

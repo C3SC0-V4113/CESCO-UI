@@ -1,159 +1,125 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import { selectBase } from './helpers';
+const bases = [
+  { id: 'base', label: 'Base UI' },
+  { id: 'radix', label: 'Radix' },
+  { id: 'aria', label: 'React Aria' },
+] as const;
 
-type ComponentDocsCheck = {
-  component: 'password-input' | 'phone-input';
-  inputSelector: string;
-  inputText: string;
-  expectedInputValue: string;
-  exampleName: string;
-  exampleInputSelector: string;
-  exampleInputText: string;
-  expectedExampleInputValue: string;
-  exampleCodeMarker: string;
-  extraDependencyCommand: string;
-  copiedSource: string;
-  waitUntilInteractive: (page: Page) => Promise<void>;
-};
+const pages = [
+  {
+    name: 'password-input',
+    title: 'Password Input',
+    input: '#password-default',
+    example: '#example-disabled',
+    codeMarker: '@/components/password-input',
+    apiRow: 'InputGroupInput attributes',
+    examples: ['Disabled', 'Invalid', 'Custom labels', 'With Field'],
+  },
+  {
+    name: 'phone-input',
+    title: 'Phone Input',
+    input: '#phone-default',
+    example: '#example-restricted-countries',
+    codeMarker: '@/components/phone-input',
+    apiRow: 'defaultCountry',
+    examples: [
+      'Default country',
+      'Disabled',
+      'Invalid',
+      'Restricted countries',
+      'Pinned countries',
+      'Spanish locale',
+      'With Field',
+    ],
+  },
+] as const;
 
-async function verifyComponentDocs(page: Page, check: ComponentDocsCheck) {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        writeText: async (value: string) => {
-          (window as Window & { copiedText?: string }).copiedText = value;
-        },
-      },
+for (const component of pages) {
+  for (const base of bases) {
+    test(`${component.title} docs render for ${base.label}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(`/components/${base.id}/${component.name}`, {
+        waitUntil: 'domcontentloaded',
+      });
+
+      await expect(page.getByRole('heading', { name: component.title, level: 1 })).toBeVisible();
+      await expect(page).toHaveURL(`/components/${base.id}/${component.name}`);
+      await expect(
+        page.getByRole('navigation', { name: 'Component base' }).getByRole('link', {
+          name: base.label,
+        })
+      ).toHaveAttribute('aria-current', 'page');
+      await expect(page.locator(component.input).first()).toBeVisible();
+
+      const toc = page.getByRole('navigation', { name: 'On this page' });
+      for (const link of await toc.getByRole('link').all()) {
+        const target = await link.getAttribute('href');
+        expect(target).toMatch(/^#/);
+        await expect(page.locator(target!)).toHaveCount(1);
+      }
+      const ids = await page
+        .locator('[id]')
+        .evaluateAll((elements) => elements.map((element) => element.id));
+      expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
+
+      await toc.getByRole('link', { name: 'Installation' }).click();
+      await expect(page).toHaveURL(/#installation$/);
+      await expect(toc.getByRole('link', { name: 'Installation' })).toHaveAttribute(
+        'aria-current',
+        'location'
+      );
+
+      const packageCommands = [
+        ['npm', `npx shadcn@latest add @cesco/${component.name}`],
+        ['pnpm', `pnpm dlx shadcn@latest add @cesco/${component.name}`],
+        ['yarn', `yarn dlx shadcn@latest add @cesco/${component.name}`],
+        ['bun', `bunx --bun shadcn@latest add @cesco/${component.name}`],
+      ] as const;
+      for (const [manager, command] of packageCommands) {
+        await page.getByRole('tab', { name: manager, exact: true }).click();
+        await expect(
+          page.locator(
+            `#installation [data-slot="code-block-content"][aria-label="${manager} install command"]`
+          )
+        ).toContainText(command);
+      }
+
+      for (const title of component.examples) {
+        await expect(
+          page.getByRole('heading', { name: title, exact: true, level: 3 })
+        ).toBeVisible();
+      }
+      const example = page.locator(component.example);
+      await expect(example.getByRole('heading', { level: 3 })).toBeVisible();
+      const viewCode = example.getByRole('button', { name: 'View Code' });
+      await expect(viewCode).toHaveAttribute('aria-expanded', 'false');
+      await viewCode.click();
+      const hideCode = example.getByRole('button', { name: 'Hide Code' });
+      await expect(hideCode).toHaveAttribute('aria-expanded', 'true');
+      const code = example.locator('[data-slot="code-block-content"]');
+      await expect(code).toBeVisible();
+      await expect(code).toContainText(component.codeMarker);
+      await hideCode.click();
+      await expect(example.getByRole('button', { name: 'View Code' })).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
+
+      await page.getByRole('row', { name: new RegExp(component.apiRow) }).waitFor();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expect(toc.getByRole('link', { name: 'API Reference' })).toHaveAttribute(
+        'aria-current',
+        'location'
+      );
     });
-  });
-  await page.goto(`/components/${check.component}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByLabel('Select component base')).toBeVisible();
-  await expect(page.locator('[data-preview-hydrated="true"]').first()).toBeVisible();
-
-  const managerTabs = page.getByRole('tablist', { name: 'Package manager' });
-  for (const { manager, command } of [
-    { manager: 'pnpm', command: `pnpm dlx shadcn@latest add @cesco/${check.component}` },
-    { manager: 'npm', command: `npx shadcn@latest add @cesco/${check.component}` },
-    { manager: 'yarn', command: `yarn dlx shadcn@latest add @cesco/${check.component}` },
-    { manager: 'bun', command: `bunx --bun shadcn@latest add @cesco/${check.component}` },
-  ]) {
-    await managerTabs.getByRole('tab', { name: manager, exact: true }).click();
-    await expect(
-      page.getByRole('tabpanel', { name: manager, exact: true }).locator('pre code')
-    ).toContainText(command);
   }
-
-  const defaultInput = page.locator(check.inputSelector);
-  await expect(defaultInput).toBeVisible();
-  await check.waitUntilInteractive(page);
-  await defaultInput.fill(check.inputText);
-  await expect(defaultInput).toHaveValue(check.expectedInputValue);
-  await selectBase(page, 'Radix');
-  await expect(
-    page.locator('[data-preview-base="radix"][data-preview-hydrated="true"]').first()
-  ).toBeVisible();
-  await expect(defaultInput).toBeVisible();
-  await expect(defaultInput).toHaveValue(check.expectedInputValue);
-
-  const exampleTabs = page.getByRole('tablist', { name: 'Examples' });
-  const previewTabs = page.getByRole('tablist', { name: 'Example view' }).first();
-  await expect(previewTabs.getByRole('tab', { name: 'Preview' })).toHaveAttribute(
-    'aria-selected',
-    'true'
-  );
-  await exampleTabs.getByRole('tab', { name: check.exampleName, exact: true }).click();
-  const exampleInput = page.locator(check.exampleInputSelector);
-  await expect(exampleInput).toBeVisible();
-  await exampleInput.fill(check.exampleInputText);
-  await expect(exampleInput).toHaveValue(check.expectedExampleInputValue);
-
-  const duplicateIds = await page.locator('[id]').evaluateAll((elements) => {
-    const ids = elements.map((element) => element.id).filter(Boolean);
-    return ids.filter((id, index) => ids.indexOf(id) !== index);
-  });
-  expect(duplicateIds).toEqual([]);
-
-  const selectedExamplePanel = page.getByRole('tabpanel', { name: check.exampleName });
-  const selectedViewTabs = selectedExamplePanel.getByRole('tablist', { name: 'Example view' });
-  await expect(selectedExamplePanel.locator(check.exampleInputSelector)).toBeVisible();
-  await selectedViewTabs.getByRole('tab', { name: 'Code' }).click();
-  await expect(selectedExamplePanel.getByText('This example also uses')).toBeVisible();
-  await expect(selectedExamplePanel.locator('pre code').first()).toContainText(
-    check.extraDependencyCommand
-  );
-  const code = selectedExamplePanel
-    .getByRole('tabpanel', { name: 'Code' })
-    .locator('pre code')
-    .last();
-  const codeContent = selectedExamplePanel
-    .getByRole('tabpanel', { name: 'Code' })
-    .locator('[data-slot="code-block-content"]')
-    .last();
-  await expect(codeContent).toHaveAttribute('aria-label', /example$/);
-  await codeContent.locator('..').getByRole('button', { name: 'Copy' }).focus();
-  await page.keyboard.press('Tab');
-  await expect(codeContent).toBeFocused();
-  await expect
-    .poll(() =>
-      codeContent.evaluate((element) => getComputedStyle(element.parentElement!).boxShadow)
-    )
-    .not.toBe('none');
-  await expect(code).toContainText(`@/components/${check.component}`);
-  await expect(code).not.toContainText('@/registry');
-  await expect(code).toContainText(check.exampleCodeMarker);
-  await page.getByRole('button', { name: 'Copy' }).last().click();
-  await expect(page.locator('[aria-live="polite"]').last()).toHaveText('Copied');
-  await expect
-    .poll(() => page.evaluate(() => (window as Window & { copiedText?: string }).copiedText))
-    .toContain(check.copiedSource);
 }
 
-test('password input docs preserve the controlled preview and provide installed code', async ({
-  page,
-}) => {
-  await verifyComponentDocs(page, {
-    component: 'password-input',
-    inputSelector: '#password-default',
-    inputText: 'demo-password',
-    expectedInputValue: 'demo-password',
-    exampleName: 'Invalid',
-    exampleInputSelector: '#password-invalid',
-    exampleInputText: 'invalid-demo',
-    expectedExampleInputValue: 'invalid-demo',
-    exampleCodeMarker: 'id="password-invalid"',
-    extraDependencyCommand: 'npx shadcn@latest add field',
-    copiedSource: '@/components/password-input',
-    waitUntilInteractive: async (currentPage) => {
-      await currentPage.getByRole('button', { name: 'Show password' }).first().click();
-      await expect(currentPage.locator('#password-default')).toHaveAttribute('type', 'text');
-      await currentPage.getByRole('button', { name: 'Hide password' }).first().click();
-    },
-  });
-  await expect(page).toHaveURL(/\/components\/password-input$/);
-});
-
-test('phone input docs preserve the controlled preview and provide installed code', async ({
-  page,
-}) => {
-  await verifyComponentDocs(page, {
-    component: 'phone-input',
-    inputSelector: '#phone-input-all-countries',
-    inputText: '74920123',
-    expectedInputValue: '7492 0123',
-    exampleName: 'Limited countries',
-    exampleInputSelector: '#phone-limited',
-    exampleInputText: '2025550123',
-    expectedExampleInputValue: '(202) 555-0123',
-    exampleCodeMarker: 'id="phone-limited"',
-    extraDependencyCommand: 'npx shadcn@latest add field',
-    copiedSource: '@/components/phone-input',
-    waitUntilInteractive: async (currentPage) => {
-      await currentPage.getByRole('combobox', { name: 'Country' }).first().click();
-      await expect(currentPage.getByPlaceholder('Search country').first()).toBeVisible();
-      await currentPage.keyboard.press('Escape');
-    },
-  });
-  await expect(page).toHaveURL(/\/components\/phone-input$/);
+test('legacy component URLs permanently redirect to the Base UI route', async ({ request }) => {
+  for (const name of ['password-input', 'phone-input']) {
+    const response = await request.get(`/components/${name}`, { maxRedirects: 0 });
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toBe(`/components/base/${name}`);
+  }
 });

@@ -29,7 +29,7 @@ export default function Home() {
       {components.length ? (
         <ItemGroup className="mt-8">
           {components.map(({ name, title, description }) => (
-            <Item key={name} variant="outline" render={<Link href={`/components/${name}`} />}>
+            <Item key={name} variant="outline" render={<Link href={`/components/base/${name}`} />}>
               <ItemContent>
                 <ItemTitle>{title}</ItemTitle>
                 <ItemDescription>{description}</ItemDescription>
