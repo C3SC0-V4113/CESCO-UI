@@ -82,8 +82,19 @@ try {
     const registryFile = path.join(tmp, `registry-${base}.json`);
     const registry = JSON.parse(source.replaceAll('{base}', base));
     for (const item of registry.items) {
-      if (!item.registryDependenciesByBase) continue;
-      item.registryDependencies = item.registryDependenciesByBase[base];
+      if (!Object.hasOwn(item, 'registryDependenciesByBase')) continue;
+      const dependenciesByBase = item.registryDependenciesByBase;
+      if (
+        !dependenciesByBase ||
+        typeof dependenciesByBase !== 'object' ||
+        !Object.hasOwn(dependenciesByBase, base) ||
+        !Array.isArray(dependenciesByBase[base])
+      ) {
+        throw new Error(
+          `Registry item "${item.name}" is missing registryDependenciesByBase for base "${base}".`
+        );
+      }
+      item.registryDependencies = dependenciesByBase[base];
       delete item.registryDependenciesByBase;
     }
     writeFileSync(registryFile, `${JSON.stringify(registry, null, 2)}\n`);
