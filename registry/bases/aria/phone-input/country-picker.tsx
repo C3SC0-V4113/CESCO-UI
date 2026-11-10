@@ -60,6 +60,12 @@ export function CountryPicker({
       textValue.includes(normalizedQuery.replace(/^\+/, ''))
     );
   };
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((option) => matchesText(`${option.name} +${option.calling}`)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const searchInputProps = {
     'aria-label': searchPlaceholder,
@@ -82,7 +88,6 @@ export function CountryPicker({
   return (
     <Select
       data-slot="phone-country-select"
-      aria-label={countryLabel}
       isOpen={isOpen}
       selectedKey={country}
       onSelectionChange={(key) => {
@@ -96,25 +101,18 @@ export function CountryPicker({
       isDisabled={isDisabled}
       isInvalid={isInvalid}
     >
-      <SelectTrigger data-slot="phone-country-select-trigger" aria-label={countryLabel}>
+      <SelectTrigger data-slot="phone-country-trigger" aria-label={countryLabel}>
         <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
         <span>+{getCountryCallingCode(country)}</span>
       </SelectTrigger>
       <SelectPopover>
         <Autocomplete filter={(textValue) => matchesText(textValue)}>
           <SelectInput {...searchInputProps} />
-          <SelectList
-            aria-label={countryLabel}
-            renderEmptyState={() => (
-              <SelectEmpty data-slot="phone-country-empty" role="status">
-                {emptyMessage}
-              </SelectEmpty>
-            )}
-          >
-            {groups.map((group, index) => (
+          <SelectList aria-label={countryLabel}>
+            {visibleGroups.map((group, index) => (
               <Fragment key={group.label}>
                 {index > 0 &&
-                  pinned.some((option) => matchesText(`${option.name} +${option.calling}`)) && (
+                  visibleGroups.some((visibleGroup) => visibleGroup.label === pinnedGroupLabel) && (
                     <SelectSeparator />
                   )}
                 <SelectGroup id={group.label}>
@@ -137,6 +135,11 @@ export function CountryPicker({
               </Fragment>
             ))}
           </SelectList>
+          {visibleGroups.length === 0 && (
+            <SelectEmpty data-slot="phone-country-empty" role="status">
+              {emptyMessage}
+            </SelectEmpty>
+          )}
         </Autocomplete>
       </SelectPopover>
     </Select>

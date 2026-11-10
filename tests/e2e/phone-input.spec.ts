@@ -20,11 +20,7 @@ for (const base of [
     const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
     await expect(preview).toBeVisible();
     await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
-    const countryTrigger = preview.locator(
-      base.value === 'aria'
-        ? '[data-slot="phone-country-select-trigger"]'
-        : '[aria-label="Country"]'
-    );
+    const countryTrigger = preview.locator('[data-slot="phone-country-trigger"]');
     await countryTrigger.click();
     const countrySearch = page.getByPlaceholder('Search country');
     await expect(countryTrigger).toHaveAttribute('aria-expanded', 'true');
