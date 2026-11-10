@@ -1,13 +1,12 @@
 'use client';
 
-import { PasswordInput } from '@/components/password-input';
+import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/registry/bases/base/password-input/password-input';
 
 export default function CustomLabelsExample() {
   return (
     <div className="grid max-w-sm gap-2">
-      <label htmlFor="password-custom" className="text-sm font-medium">
-        Account secret
-      </label>
+      <Label htmlFor="password-custom">Account secret</Label>
       <PasswordInput
         id="password-custom"
         showLabel="Reveal account secret"

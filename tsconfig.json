@@ -19,8 +19,6 @@
       }
     ],
     "paths": {
-      "@/components/password-input": ["./registry/bases/base/password-input/password-input.tsx"],
-      "@/components/phone-input": ["./registry/bases/base/phone-input/phone-input.tsx"],
       "@/*": ["./*"]
     }
   },

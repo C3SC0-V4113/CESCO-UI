@@ -18,19 +18,19 @@ import type { ComponentBase } from '@/app/components/_components/types';
 
 const previews = {
   default: {
-    base: lazy(() => import('../_examples/generated/base/phone-input/default')),
-    radix: lazy(() => import('../_examples/generated/radix/phone-input/default')),
-    aria: lazy(() => import('../_examples/generated/aria/phone-input/default')),
+    base: lazy(() => import('../_examples/base/phone-input/default')),
+    radix: lazy(() => import('../_examples/radix/phone-input/default')),
+    aria: lazy(() => import('../_examples/aria/phone-input/default')),
   },
   'restricted-countries': {
-    base: lazy(() => import('../_examples/generated/base/phone-input/restricted-countries')),
-    radix: lazy(() => import('../_examples/generated/radix/phone-input/restricted-countries')),
-    aria: lazy(() => import('../_examples/generated/aria/phone-input/restricted-countries')),
+    base: lazy(() => import('../_examples/base/phone-input/restricted-countries')),
+    radix: lazy(() => import('../_examples/radix/phone-input/restricted-countries')),
+    aria: lazy(() => import('../_examples/aria/phone-input/restricted-countries')),
   },
   'with-field': {
-    base: lazy(() => import('../_examples/generated/base/phone-input/with-field')),
-    radix: lazy(() => import('../_examples/generated/radix/phone-input/with-field')),
-    aria: lazy(() => import('../_examples/generated/aria/phone-input/with-field')),
+    base: lazy(() => import('../_examples/base/phone-input/with-field')),
+    radix: lazy(() => import('../_examples/radix/phone-input/with-field')),
+    aria: lazy(() => import('../_examples/aria/phone-input/with-field')),
   },
 };
 
@@ -43,20 +43,20 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
     default: {
       title: 'Default',
       description: 'Format a national number while exposing its E.164 value.',
-      source: readExampleSource('phone-input/default.tsx'),
+      source: readExampleSource(base, 'phone-input', 'default.tsx'),
       preview: renderPreview(previews.default),
     },
     'restricted-countries': {
       title: 'Restricted countries',
       description: 'Limit the picker to the countries supported by a form or workflow.',
-      source: readExampleSource('phone-input/restricted-countries.tsx'),
+      source: readExampleSource(base, 'phone-input', 'restricted-countries.tsx'),
       preview: renderPreview(previews['restricted-countries']),
     },
     'with-field': {
       title: 'With Field',
       description:
         'Compose the input with shadcn Field primitives. Add Field first with `npx shadcn@latest add field`.',
-      source: readExampleSource('phone-input/with-field.tsx'),
+      source: readExampleSource(base, 'phone-input', 'with-field.tsx'),
       preview: renderPreview(previews['with-field']),
     },
   });

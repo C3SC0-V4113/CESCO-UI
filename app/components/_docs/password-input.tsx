@@ -18,29 +18,29 @@ import type { ComponentBase } from '@/app/components/_components/types';
 
 const previews = {
   default: {
-    base: lazy(() => import('../_examples/generated/base/password-input/default')),
-    radix: lazy(() => import('../_examples/generated/radix/password-input/default')),
-    aria: lazy(() => import('../_examples/generated/aria/password-input/default')),
+    base: lazy(() => import('../_examples/base/password-input/default')),
+    radix: lazy(() => import('../_examples/radix/password-input/default')),
+    aria: lazy(() => import('../_examples/aria/password-input/default')),
   },
   disabled: {
-    base: lazy(() => import('../_examples/generated/base/password-input/disabled')),
-    radix: lazy(() => import('../_examples/generated/radix/password-input/disabled')),
-    aria: lazy(() => import('../_examples/generated/aria/password-input/disabled')),
+    base: lazy(() => import('../_examples/base/password-input/disabled')),
+    radix: lazy(() => import('../_examples/radix/password-input/disabled')),
+    aria: lazy(() => import('../_examples/aria/password-input/disabled')),
   },
   invalid: {
-    base: lazy(() => import('../_examples/generated/base/password-input/invalid')),
-    radix: lazy(() => import('../_examples/generated/radix/password-input/invalid')),
-    aria: lazy(() => import('../_examples/generated/aria/password-input/invalid')),
+    base: lazy(() => import('../_examples/base/password-input/invalid')),
+    radix: lazy(() => import('../_examples/radix/password-input/invalid')),
+    aria: lazy(() => import('../_examples/aria/password-input/invalid')),
   },
   'custom-labels': {
-    base: lazy(() => import('../_examples/generated/base/password-input/custom-labels')),
-    radix: lazy(() => import('../_examples/generated/radix/password-input/custom-labels')),
-    aria: lazy(() => import('../_examples/generated/aria/password-input/custom-labels')),
+    base: lazy(() => import('../_examples/base/password-input/custom-labels')),
+    radix: lazy(() => import('../_examples/radix/password-input/custom-labels')),
+    aria: lazy(() => import('../_examples/aria/password-input/custom-labels')),
   },
   'with-field': {
-    base: lazy(() => import('../_examples/generated/base/password-input/with-field')),
-    radix: lazy(() => import('../_examples/generated/radix/password-input/with-field')),
-    aria: lazy(() => import('../_examples/generated/aria/password-input/with-field')),
+    base: lazy(() => import('../_examples/base/password-input/with-field')),
+    radix: lazy(() => import('../_examples/radix/password-input/with-field')),
+    aria: lazy(() => import('../_examples/aria/password-input/with-field')),
   },
 };
 
@@ -53,32 +53,32 @@ export function PasswordInputDocsPage({ base }: { base: ComponentBase }) {
     default: {
       title: 'Default',
       description: 'Add an associated label and use the password visibility control.',
-      source: readExampleSource('password-input/default.tsx'),
+      source: readExampleSource(base, 'password-input', 'default.tsx'),
       preview: renderPreview(previews.default),
     },
     disabled: {
       title: 'Disabled',
       description: 'Use the native disabled attribute when the password cannot be changed.',
-      source: readExampleSource('password-input/disabled.tsx'),
+      source: readExampleSource(base, 'password-input', 'disabled.tsx'),
       preview: renderPreview(previews.disabled),
     },
     invalid: {
       title: 'Invalid',
       description: 'Set aria-invalid and connect an error message with aria-describedby.',
-      source: readExampleSource('password-input/invalid.tsx'),
+      source: readExampleSource(base, 'password-input', 'invalid.tsx'),
       preview: renderPreview(previews.invalid),
     },
     'custom-labels': {
       title: 'Custom labels',
       description: 'Override both accessible names for the visibility control.',
-      source: readExampleSource('password-input/custom-labels.tsx'),
+      source: readExampleSource(base, 'password-input', 'custom-labels.tsx'),
       preview: renderPreview(previews['custom-labels']),
     },
     'with-field': {
       title: 'With Field',
       description:
         'Compose the input with shadcn Field primitives. Add Field first with `npx shadcn@latest add field`.',
-      source: readExampleSource('password-input/with-field.tsx'),
+      source: readExampleSource(base, 'password-input', 'with-field.tsx'),
       preview: renderPreview(previews['with-field']),
     },
   });

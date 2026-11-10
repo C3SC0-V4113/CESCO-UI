@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 
 import { passwordInputApi, phoneInputApi } from '@/app/components/_docs/api';
+import { readExampleSource } from '@/app/components/_docs/code';
 import {
   componentBaseFromPathname,
   componentBases,
@@ -138,21 +139,44 @@ describe('component documentation routes', () => {
 });
 
 describe('per-base example imports', () => {
-  it('keeps one installable source example and generates direct imports for each base', () => {
+  const expectedExamples = {
+    'password-input': [
+      'custom-labels.tsx',
+      'default.tsx',
+      'disabled.tsx',
+      'invalid.tsx',
+      'with-field.tsx',
+    ],
+    'phone-input': ['default.tsx', 'restricted-countries.tsx', 'with-field.tsx'],
+  };
+
+  it('keeps all examples in sync across bases and shows installable imports', () => {
     for (const { name } of registry.items) {
-      const files = readdirSync(join(exampleRoot, name)).filter((file) => file.endsWith('.tsx'));
-      expect(files.length).toBeGreaterThan(0);
+      const expectedFiles = expectedExamples[name as keyof typeof expectedExamples];
+      expect(expectedFiles).toBeDefined();
+      const normalizedSourceByFile = new Map<string, string>();
 
-      for (const file of files) {
-        const source = readFileSync(join(exampleRoot, name, file), 'utf8');
-        expect(source).toContain(`from '@/components/${name}'`);
-        expect(source).not.toMatch(/from ['"]@\/app\//);
-        expect(source).not.toMatch(/from ['"]@\/registry\//);
+      for (const base of bases) {
+        const directory = join(exampleRoot, base, name);
+        const files = readdirSync(directory)
+          .filter((file) => file.endsWith('.tsx'))
+          .sort();
+        expect(files).toEqual(expectedFiles);
 
-        for (const base of bases) {
-          const generated = readFileSync(join(exampleRoot, 'generated', base, name, file), 'utf8');
-          expect(generated).toContain(`from '@/registry/bases/${base}/${name}/${name}'`);
-          expect(generated).not.toContain(`from '@/components/${name}'`);
+        for (const file of files) {
+          const source = readFileSync(join(directory, file), 'utf8').trim();
+          const baseImport = `@/registry/bases/${base}/${name}/${name}`;
+          const installableImport = `@/components/${name}`;
+          expect(source).toContain(`from '${baseImport}'`);
+          expect(source).not.toMatch(/from ['"]@\/app\//);
+
+          const normalized = source.replaceAll(baseImport, installableImport);
+          const expectedNormalized = normalizedSourceByFile.get(file) ?? normalized;
+          expect(normalized).toBe(expectedNormalized);
+          normalizedSourceByFile.set(file, expectedNormalized);
+
+          expect(readExampleSource(base, name, file)).toBe(normalized);
+          expect(readExampleSource(base, name, file)).not.toContain('@/registry/bases/');
         }
       }
     }

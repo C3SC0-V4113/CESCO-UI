@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { PhoneInput } from '@/components/phone-input';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { PhoneInput } from '@/registry/bases/aria/phone-input/phone-input';
 
 export default function PhoneInputWithFieldExample() {
   const [value, setValue] = useState('');

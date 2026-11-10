@@ -1,13 +1,12 @@
 'use client';
 
-import { PasswordInput } from '@/components/password-input';
+import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/registry/bases/base/password-input/password-input';
 
 export default function InvalidExample() {
   return (
     <div className="grid max-w-sm gap-2">
-      <label htmlFor="password-invalid" className="text-sm font-medium">
-        Password
-      </label>
+      <Label htmlFor="password-invalid">Password</Label>
       <PasswordInput
         id="password-invalid"
         aria-invalid="true"

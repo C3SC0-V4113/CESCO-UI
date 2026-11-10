@@ -14,14 +14,16 @@ const pages = [
     example: '#example-default',
     codeMarker: '@/components/password-input',
     apiRow: 'InputGroupInput attributes',
+    examples: ['Default', 'Disabled', 'Invalid', 'Custom labels', 'With Field'],
   },
   {
     name: 'phone-input',
     title: 'Phone Input',
-    input: '[aria-label="Phone number"]',
+    input: '#phone-default',
     example: '#example-restricted-countries',
     codeMarker: '@/components/phone-input',
     apiRow: 'defaultCountry',
+    examples: ['Default', 'Restricted countries', 'With Field'],
   },
 ] as const;
 
@@ -52,6 +54,11 @@ for (const component of pages) {
       await toc.getByRole('link', { name: 'Installation' }).click();
       await expect(page).toHaveURL(/#installation$/);
 
+      for (const title of component.examples) {
+        await expect(
+          page.getByRole('heading', { name: title, exact: true, level: 3 })
+        ).toBeVisible();
+      }
       const example = page.locator(component.example);
       await expect(example.getByRole('heading', { level: 3 })).toBeVisible();
       const viewCode = example.getByRole('button', { name: 'View Code' });

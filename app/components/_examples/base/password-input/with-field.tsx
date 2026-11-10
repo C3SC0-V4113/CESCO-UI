@@ -1,7 +1,7 @@
 'use client';
 
-import { PasswordInput } from '@/components/password-input';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { PasswordInput } from '@/registry/bases/base/password-input/password-input';
 
 export default function PasswordInputWithFieldExample() {
   return (

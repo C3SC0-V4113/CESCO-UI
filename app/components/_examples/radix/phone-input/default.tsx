@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 
-import { PhoneInput } from '@/components/phone-input';
+import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/registry/bases/radix/phone-input/phone-input';
 
 export default function DefaultExample() {
   const [value, setValue] = useState('');
 
   return (
     <div className="grid max-w-sm gap-3">
-      <PhoneInput aria-label="Phone number" defaultCountry="US" value={value} onChange={setValue} />
+      <Label htmlFor="phone-default">Phone number</Label>
+      <PhoneInput id="phone-default" defaultCountry="US" value={value} onChange={setValue} />
       <p aria-live="polite" className="text-sm text-muted-foreground">
         E.164: {value || 'Enter a number'}
       </p>
