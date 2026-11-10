@@ -1,23 +1,23 @@
 'use client';
 
 import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
-import { useMemo, useRef, useState } from 'react';
-import { useFilter } from 'react-aria-components';
+import { Fragment, useMemo, useState, type ComponentProps, type KeyboardEvent } from 'react';
+import { Autocomplete, useFilter } from 'react-aria-components';
 
-import { buttonVariants } from '@/registry/bases/aria/ui/button';
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxSeparator,
-  ComboboxTrigger,
-} from '@/registry/bases/aria/ui/combobox';
+  Select,
+  SelectEmpty,
+  SelectGroup,
+  SelectInput,
+  SelectItem,
+  SelectLabel,
+  SelectList,
+  SelectPopover,
+  SelectSeparator,
+  SelectTrigger,
+} from '@/registry/bases/aria/ui/select';
 import { CountryFlag } from '@/registry/shared/components/country-flag';
-import { getCountryOptions, type CountryOption } from '@/registry/shared/lib/phone';
+import { getCountryOptions } from '@/registry/shared/lib/phone';
 
 import type { CountryPickerProps } from '@/registry/shared/components/country-picker-base';
 
@@ -36,91 +36,89 @@ export function CountryPicker({
   isInvalid,
 }: CountryPickerProps) {
   const [query, setQuery] = useState('');
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const filter = useFilter({ sensitivity: 'base' });
   const { pinned, all } = useMemo(
     () => getCountryOptions(locale, pinnedCountries, countries),
     [locale, pinnedCountries, countries]
   );
-  const includes = (value: string) => !query.trim() || filter.contains(value, query.trim());
-  const pinnedItems = pinned.filter(
-    (item) => includes(item.name) || item.calling.includes(query.trim().replace(/^\+/, ''))
+  const groups = useMemo(
+    () =>
+      pinned.length
+        ? [
+            { label: pinnedGroupLabel, items: pinned },
+            { label: allGroupLabel, items: all },
+          ]
+        : [{ label: allGroupLabel, items: all }],
+    [all, allGroupLabel, pinned, pinnedGroupLabel]
   );
-  const allItems = all.filter(
-    (item) => includes(item.name) || item.calling.includes(query.trim().replace(/^\+/, ''))
-  );
-  const groups = pinned.length
-    ? [
-        { label: pinnedGroupLabel, items: pinnedItems },
-        { label: allGroupLabel, items: allItems },
-      ].filter((group) => group.items.length > 0)
-    : [{ label: allGroupLabel, items: allItems }].filter((group) => group.items.length > 0);
+  const matchesText = (textValue: string, value = query) => {
+    const normalizedQuery = value.trim();
+    return (
+      !normalizedQuery ||
+      filter.contains(textValue, normalizedQuery) ||
+      textValue.includes(normalizedQuery.replace(/^\+/, ''))
+    );
+  };
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((option) => matchesText(`${option.name} +${option.calling}`)),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const searchInputProps = {
+    'aria-label': searchPlaceholder,
+    placeholder: searchPlaceholder,
+    value: query,
+    onChange: setQuery,
+    onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== 'Enter') return;
+      const matches = groups
+        .flatMap((group) => group.items)
+        .filter((option) => matchesText(`${option.name} +${option.calling}`));
+      if (matches.length !== 1) return;
+      event.preventDefault();
+      onCountryChange(matches[0].code);
+      setIsOpen(false);
+      setQuery('');
+    },
+  } as ComponentProps<typeof SelectInput> & { placeholder: string };
 
   return (
-    <Combobox
-      data-slot="phone-country-combobox"
-      aria-label={countryLabel}
-      items={groups}
+    <Select
+      data-slot="phone-country-select"
+      isOpen={isOpen}
       selectedKey={country}
       onSelectionChange={(key) => {
         if (typeof key === 'string') onCountryChange(key as CountryCode);
         setQuery('');
       }}
-      inputValue={query}
-      onInputChange={setQuery}
       onOpenChange={(open) => {
+        setIsOpen(open);
         if (!open) setQuery('');
       }}
       isDisabled={isDisabled}
       isInvalid={isInvalid}
-      allowsEmptyCollection
-      defaultFilter={() => true}
-      className="relative"
     >
-      <div ref={triggerRef} className="w-fit">
-        <ComboboxTrigger
-          slot="trigger"
-          aria-label={countryLabel}
-          className={buttonVariants({ variant: 'outline', className: 'w-fit whitespace-nowrap' })}
-        >
-          <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
-          <span>+{getCountryCallingCode(country)}</span>
-        </ComboboxTrigger>
-      </div>
-      <ComboboxContent anchor={triggerRef} className="!max-h-72 w-72" placement="bottom start">
-        <ComboboxInput
-          aria-label={searchPlaceholder}
-          placeholder={searchPlaceholder}
-          showTrigger={false}
-          className="m-1 mb-0 h-8 border-input/30 bg-input/30 shadow-none"
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter') return;
-            const matches = groups.flatMap((group) => group.items);
-            if (matches.length !== 1) return;
-            event.preventDefault();
-            onCountryChange(matches[0].code);
-            setQuery('');
-          }}
-        />
-        {groups.length === 0 ? (
-          <div
-            data-slot="combobox-empty"
-            role="status"
-            className="px-2 py-6 text-center text-sm text-muted-foreground"
-          >
-            {emptyMessage}
-          </div>
-        ) : (
-          <ComboboxList items={groups} className="max-h-72">
-            {(group) => {
-              const index = groups.indexOf(group);
-              return (
-                <ComboboxGroup key={group.label} items={group.items}>
-                  {index > 0 && <ComboboxSeparator />}
-                  <ComboboxLabel>{group.label}</ComboboxLabel>
-                  {group.items.map((option: CountryOption) => (
-                    <ComboboxItem
+      <SelectTrigger data-slot="phone-country-trigger" aria-label={countryLabel}>
+        <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
+        <span>+{getCountryCallingCode(country)}</span>
+      </SelectTrigger>
+      <SelectPopover>
+        <Autocomplete filter={(textValue) => matchesText(textValue)}>
+          <SelectInput {...searchInputProps} />
+          <SelectList aria-label={countryLabel}>
+            {visibleGroups.map((group, index) => (
+              <Fragment key={group.label}>
+                {index > 0 &&
+                  visibleGroups.some((visibleGroup) => visibleGroup.label === pinnedGroupLabel) && (
+                    <SelectSeparator />
+                  )}
+                <SelectGroup id={group.label}>
+                  <SelectLabel>{group.label}</SelectLabel>
+                  {group.items.map((option) => (
+                    <SelectItem
                       key={option.code}
                       id={option.code}
                       textValue={`${option.name} +${option.calling}`}
@@ -129,16 +127,21 @@ export function CountryPicker({
                         country={option.code}
                         className="h-3.5 w-5 rounded-xs object-cover"
                       />
-                      <span className="flex-1 truncate">{option.name}</span>
+                      <span>{option.name}</span>
                       <span className="text-muted-foreground">+{option.calling}</span>
-                    </ComboboxItem>
+                    </SelectItem>
                   ))}
-                </ComboboxGroup>
-              );
-            }}
-          </ComboboxList>
-        )}
-      </ComboboxContent>
-    </Combobox>
+                </SelectGroup>
+              </Fragment>
+            ))}
+          </SelectList>
+          {visibleGroups.length === 0 && (
+            <SelectEmpty data-slot="phone-country-empty" role="status">
+              {emptyMessage}
+            </SelectEmpty>
+          )}
+        </Autocomplete>
+      </SelectPopover>
+    </Select>
   );
 }

@@ -19,7 +19,7 @@ npm run doctor
 npm run check
 ```
 
-`npm run test:e2e` uses `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
+`npm run test:e2e` builds and serves production on `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
 
 ## Tooling
 
@@ -94,6 +94,7 @@ Until `@cesco` is listed in the shadcn registry directory, users add it to their
 - `registry/shared/`: base-agnostic components. They compose shadcn components declared in `registryDependencies`, which install in the user's base and style.
 - `registry/bases/<base>/`: per-base variants, for components that use base-specific props or state selectors (for example `pressed` in Radix and Base UI, `isSelected` in React Aria).
 - `registry/bases/<base>/ui/`: vendored shadcn primitives used only to develop and test each variant. They are not published; imports of `@/registry/bases/<base>/ui/*` become `@/components/ui/*` on install.
+- `registryDependenciesByBase` maps base names to the registry dependencies used by each base-specific variant; the build emits the matching standard `registryDependencies` for each base.
 - `registry/shared/lib/icon-placeholder.tsx`: write icons as `<IconPlaceholder lucide="…" tabler="…" hugeicons="…" phosphor="…" remixicon="…" />`. On install the shadcn CLI swaps it for the icon of the user's library.
 
 ### Base primitive mapping

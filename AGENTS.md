@@ -18,7 +18,7 @@ Run these before claiming implementation complete:
 4. `npm run test`
 
 - Run `npm run test:e2e` when E2E behavior changed.
-- `npm run test:e2e` uses `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
+- `npm run test:e2e` builds and serves production on `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
 - `npm run doctor`
 - `npm run check`
 

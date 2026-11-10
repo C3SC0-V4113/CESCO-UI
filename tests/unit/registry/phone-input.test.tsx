@@ -49,11 +49,7 @@ describe.each([
   ['aria', Aria],
 ] as const)('PhoneInput (%s)', (_base, PhoneInput) => {
   function openCountryPicker() {
-    fireEvent.click(
-      _base === 'aria'
-        ? screen.getByRole('button', { name: 'Country selector' })
-        : screen.getByRole('combobox', { name: 'Country selector' })
-    );
+    fireEvent.click(screen.getByTestId('phone-country-trigger'));
   }
 
   it('formats typed national numbers and emits E.164', () => {
@@ -68,19 +64,19 @@ describe.each([
       const onChange = vi.fn();
       render(<PhoneInput value="" onChange={onChange} defaultCountry="US" />);
       fireEvent.change(screen.getByRole('textbox'), { target: { value } });
-      expect(screen.getByText(/\+44/)).toBeTruthy();
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+44');
       expect(onChange).toHaveBeenLastCalledWith('+447911123456');
     }
   );
   it('hydrates an initial E.164 value and removes pasted calling code', async () => {
     const onChange = vi.fn();
     const { rerender } = render(<PhoneInput value="+50374920123" onChange={onChange} />);
-    await waitForCountryFlag();
-    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('7492 0123');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    await waitFor(() => expect(input.value).toBe('7492 0123'));
     expect(screen.getByText('+503')).toBeTruthy();
     rerender(<PhoneInput value="" onChange={onChange} defaultCountry="SV" />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '+50374920123' } });
-    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('7492 0123');
+    await waitFor(() => expect(input.value).toBe('7492 0123'));
     expect(onChange).toHaveBeenLastCalledWith('+50374920123');
   });
   it('syncs external value changes, including clearing the field', async () => {
@@ -162,10 +158,7 @@ describe.each([
     fireEvent.keyDown(search, { key: 'ArrowDown' });
     fireEvent.keyDown(search, { key: 'Enter' });
     fireEvent.keyDown(search, { key: 'Escape' });
-    expect(
-      screen.getByRole(_base === 'aria' ? 'button' : 'combobox', { name: 'Country selector' })
-        .textContent
-    ).toContain('+1');
+    expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+1');
   });
   it('loads the selected flag on demand', async () => {
     render(<PhoneInput value="" onChange={vi.fn()} defaultCountry="SV" />);
@@ -174,18 +167,17 @@ describe.each([
   });
   it('defaults to the US and exposes an overridable country label', () => {
     const { rerender } = render(<PhoneInput value="" onChange={vi.fn()} />);
-    expect(
-      screen.getByRole(_base === 'aria' ? 'button' : 'combobox', { name: 'Country' })
-    ).toBeTruthy();
+    const countryTrigger = screen.getByTestId('phone-country-trigger');
+    expect(countryTrigger.getAttribute('aria-label')).toBe('Country');
     rerender(<PhoneInput value="" onChange={vi.fn()} countryLabel="Contact country" />);
-    expect(
-      screen.getByRole(_base === 'aria' ? 'button' : 'combobox', { name: 'Contact country' })
-    ).toBeTruthy();
+    expect(screen.getByTestId('phone-country-trigger').getAttribute('aria-label')).toBe(
+      'Contact country'
+    );
     expect(screen.getByText('+1')).toBeTruthy();
   });
   it('does not mark the country trigger invalid when aria-invalid is false', () => {
     render(<PhoneInput value="" onChange={vi.fn()} aria-invalid="false" />);
-    const trigger = screen.getByRole(_base === 'aria' ? 'button' : 'combobox', { name: 'Country' });
+    const trigger = screen.getByTestId('phone-country-trigger');
     expect(trigger.getAttribute('aria-invalid')).not.toBe('true');
   });
   it('supports translated labels, searchable pinned groups, and hides empty groups', () => {
@@ -249,6 +241,27 @@ describe.each([
     expect(screen.getByText('All countries')).toBeTruthy();
     expect(screen.queryByText('Suggested')).toBeNull();
     expect(screen.queryAllByRole('separator')).toHaveLength(0);
+  });
+  it('searches for and selects a country', async () => {
+    render(
+      <PhoneInput
+        value=""
+        onChange={vi.fn()}
+        countries={['US', 'SV', 'AR']}
+        pinnedCountries={['US']}
+        countryLabel="Country selector"
+      />
+    );
+    await waitForCountryFlag();
+    openCountryPicker();
+    fireEvent.change(screen.getByPlaceholderText('Search country'), {
+      target: { value: 'Argent' },
+    });
+    const argentina = screen.getByRole('option', { name: /Argentina/ });
+    expect(argentina).toBeTruthy();
+    fireEvent.click(argentina);
+    const trigger = screen.getByTestId('phone-country-trigger');
+    await waitFor(() => expect(trigger.textContent).toContain('+54'));
   });
   it('does not restore formatting characters when deleting', () => {
     render(<PhoneInput value="+15025551234" onChange={vi.fn()} />);

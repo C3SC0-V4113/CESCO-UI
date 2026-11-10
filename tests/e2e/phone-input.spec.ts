@@ -20,7 +20,7 @@ for (const base of [
     const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
     await expect(preview).toBeVisible();
     await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
-    const countryTrigger = page.locator('[aria-label="Country"]').nth(1);
+    const countryTrigger = preview.locator('[data-slot="phone-country-trigger"]');
     await countryTrigger.click();
     const countrySearch = page.getByPlaceholder('Search country');
     await expect(countryTrigger).toHaveAttribute('aria-expanded', 'true');
@@ -29,8 +29,8 @@ for (const base of [
     await page.getByRole('option', { name: /United States \+1/ }).click();
     await expect(countryTrigger).toContainText('+1');
     await page.keyboard.press('Escape');
-    await page.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
-    await expect(page.getByText('E.164: +50374920123')).toBeVisible();
+    await preview.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
+    await expect(page.getByText('E.164: +174920123')).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 }

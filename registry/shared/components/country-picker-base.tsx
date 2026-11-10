@@ -99,6 +99,7 @@ function CountryPicker({
     >
       <ComboboxTrigger
         render={<TriggerButton variant="outline" className="w-fit whitespace-nowrap" />}
+        data-slot="phone-country-trigger"
         aria-label={countryLabel}
         aria-invalid={isInvalid}
       >

@@ -9,7 +9,11 @@
       "title": "Phone Input",
       "description": "A country-aware phone input that formats numbers as you type and emits E.164 values.",
       "dependencies": ["cn", "country-flag-icons", "libphonenumber-js"],
-      "registryDependencies": ["button", "combobox", "input"],
+      "registryDependenciesByBase": {
+        "base": ["button", "combobox", "input"],
+        "radix": ["button", "combobox", "input"],
+        "aria": ["button", "select", "input"]
+      },
       "files": [
         {
           "path": "registry/shared/lib/phone.ts",
