@@ -8,18 +8,16 @@ test('shows the registry home heading', async ({ page }) => {
 
 test('shows desktop navigation and marks the current component active', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/components/password-input');
+  await page.goto('/components/radix/password-input');
 
   const navigation = page.getByRole('navigation', { name: 'Registry components' });
   await expect(navigation).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Password Input' })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
-  await expect(navigation.getByRole('link', { name: 'Phone Input' })).not.toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  const password = navigation.getByRole('link', { name: 'Password Input' });
+  const phone = navigation.getByRole('link', { name: 'Phone Input' });
+  await expect(password).toHaveAttribute('href', '/components/radix/password-input');
+  await expect(password).toHaveAttribute('aria-current', 'page');
+  await expect(phone).toHaveAttribute('href', '/components/radix/phone-input');
+  await expect(phone).not.toHaveAttribute('aria-current', 'page');
 });
 
 test('opens mobile navigation and closes it after navigating', async ({ page }) => {
@@ -33,12 +31,16 @@ test('opens mobile navigation and closes it after navigating', async ({ page }) 
   await expect(navigation).toBeVisible();
 
   await navigation.getByRole('link', { name: 'Phone Input' }).click();
-  await expect(page).toHaveURL(/\/components\/phone-input$/);
+  await expect(page).toHaveURL(/\/components\/base\/phone-input$/);
   await expect(navigation).toBeHidden();
 });
 
-test('unknown component routes return the styled 404 page', async ({ page }) => {
-  for (const path of ['/components/does-not-exist', '/components/password-input/extra']) {
+test('unknown base and component routes return the styled 404 page', async ({ page }) => {
+  for (const path of [
+    '/components/nope/password-input',
+    '/components/base/does-not-exist',
+    '/components/password-input/extra',
+  ]) {
     const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
 
     expect(response?.status()).toBe(404);

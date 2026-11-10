@@ -1,36 +1,46 @@
 import { expect, test } from '@playwright/test';
 
-import { selectBase } from './helpers';
+import type { Page } from '@playwright/test';
 
-for (const base of [
-  { value: 'base', label: 'Base UI' },
-  { value: 'radix', label: 'Radix' },
-  { value: 'aria', label: 'React Aria' },
-]) {
-  test(`phone input formats a number and emits E.164 on ${base.label}`, async ({ page }) => {
+async function selectCountryForBase(page: Page, baseId: string) {
+  if (baseId === 'aria') return;
+
+  const preview = page.getByRole('region', { name: 'Preview' });
+  const countryTrigger = preview.getByRole('combobox', { name: 'Country' });
+  await countryTrigger.click();
+  const countrySearch = page.getByPlaceholder('Search country');
+  await expect(countrySearch).toBeVisible();
+  await countrySearch.fill('United States');
+  await page.getByRole('option', { name: /United States \+1/ }).click();
+  await expect(countryTrigger).toContainText('+1');
+}
+
+const bases = [
+  { id: 'base', label: 'Base UI' },
+  { id: 'radix', label: 'Radix' },
+  { id: 'aria', label: 'React Aria' },
+] as const;
+
+for (const base of bases) {
+  test(`phone input formats a number on ${base.label}`, async ({ page }) => {
     const runtimeErrors: string[] = [];
     page.on('pageerror', (error) => runtimeErrors.push(error.message));
     page.on('console', (message) => {
       if (message.type() === 'error') runtimeErrors.push(message.text());
     });
-    await page.goto('/components/phone-input', { waitUntil: 'domcontentloaded' });
-    const baseSelector = page.getByRole('combobox', { name: 'Select component base' });
-    await expect(baseSelector).toBeVisible();
-    await selectBase(page, base.label);
-    const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
-    await expect(preview).toBeVisible();
-    await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
-    const countryTrigger = page.locator('[aria-label="Country"]').nth(1);
-    await countryTrigger.click();
-    const countrySearch = page.getByPlaceholder('Search country');
-    await expect(countryTrigger).toHaveAttribute('aria-expanded', 'true');
-    await expect(countrySearch).toBeVisible();
-    await countrySearch.fill('United States');
-    await page.getByRole('option', { name: /United States \+1/ }).click();
-    await expect(countryTrigger).toContainText('+1');
-    await page.keyboard.press('Escape');
-    await page.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
-    await expect(page.getByText('E.164: +50374920123')).toBeVisible();
+    await page.goto(`/components/${base.id}/phone-input`, { waitUntil: 'domcontentloaded' });
+
+    const preview = page.getByRole('region', { name: 'Preview' });
+    await expect(preview.locator('[data-preview-hydrated]')).toHaveAttribute(
+      'data-preview-hydrated',
+      'true'
+    );
+    await selectCountryForBase(page, base.id);
+
+    const phone = preview.getByRole('textbox', { name: 'Phone number' });
+    await phone.fill('2025550123');
+    await expect(phone).toHaveValue('(202) 555-0123');
+    await expect(preview.getByText('E.164: +12025550123')).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 }
