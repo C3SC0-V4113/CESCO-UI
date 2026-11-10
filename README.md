@@ -19,7 +19,7 @@ npm run doctor
 npm run check
 ```
 
-`npm run test:e2e` uses `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
+`npm run test:e2e` builds and serves production on `E2E_PORT` (default `3100`). If the port is busy, Playwright fails immediately and never reuses another server; use a different `E2E_PORT` per parallel worktree.
 
 ## Tooling
 
