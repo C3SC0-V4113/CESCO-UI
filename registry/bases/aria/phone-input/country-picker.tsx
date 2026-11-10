@@ -2,22 +2,22 @@
 
 import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import { useMemo, useRef, useState } from 'react';
-import { useFilter } from 'react-aria-components';
-
-import { buttonVariants } from '@/registry/bases/aria/ui/button';
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxSeparator,
-  ComboboxTrigger,
-} from '@/registry/bases/aria/ui/combobox';
+  Autocomplete,
+  Header,
+  ListBox,
+  ListBoxItem,
+  ListBoxSection,
+  Popover,
+  SearchField,
+  Select,
+  useFilter,
+} from 'react-aria-components';
+
+import { Button } from '@/registry/bases/aria/ui/button';
+import { Input } from '@/registry/bases/aria/ui/input';
 import { CountryFlag } from '@/registry/shared/components/country-flag';
-import { getCountryOptions, type CountryOption } from '@/registry/shared/lib/phone';
+import { getCountryOptions } from '@/registry/shared/lib/phone';
 
 import type { CountryPickerProps } from '@/registry/shared/components/country-picker-base';
 
@@ -42,103 +42,120 @@ export function CountryPicker({
     () => getCountryOptions(locale, pinnedCountries, countries),
     [locale, pinnedCountries, countries]
   );
-  const includes = (value: string) => !query.trim() || filter.contains(value, query.trim());
-  const pinnedItems = pinned.filter(
-    (item) => includes(item.name) || item.calling.includes(query.trim().replace(/^\+/, ''))
-  );
-  const allItems = all.filter(
-    (item) => includes(item.name) || item.calling.includes(query.trim().replace(/^\+/, ''))
-  );
-  const groups = pinned.length
-    ? [
-        { label: pinnedGroupLabel, items: pinnedItems },
-        { label: allGroupLabel, items: allItems },
-      ].filter((group) => group.items.length > 0)
-    : [{ label: allGroupLabel, items: allItems }].filter((group) => group.items.length > 0);
+  const groups = useMemo(() => {
+    return pinned.length
+      ? [
+          { label: pinnedGroupLabel, items: pinned },
+          { label: allGroupLabel, items: all },
+        ]
+      : [{ label: allGroupLabel, items: all }];
+  }, [all, allGroupLabel, pinned, pinnedGroupLabel]);
+  const matchesText = (textValue: string, value = query) => {
+    const normalizedQuery = value.trim();
+    return (
+      !normalizedQuery ||
+      filter.contains(textValue, normalizedQuery) ||
+      textValue.includes(normalizedQuery.replace(/^\+/, ''))
+    );
+  };
 
   return (
-    <Combobox
-      data-slot="phone-country-combobox"
+    <Select
+      data-slot="phone-country-select"
       aria-label={countryLabel}
-      items={groups}
       selectedKey={country}
       onSelectionChange={(key) => {
         if (typeof key === 'string') onCountryChange(key as CountryCode);
         setQuery('');
       }}
-      inputValue={query}
-      onInputChange={setQuery}
       onOpenChange={(open) => {
         if (!open) setQuery('');
       }}
       isDisabled={isDisabled}
       isInvalid={isInvalid}
-      allowsEmptyCollection
-      defaultFilter={() => true}
-      className="relative"
+      className="relative w-fit"
     >
       <div ref={triggerRef} className="w-fit">
-        <ComboboxTrigger
-          slot="trigger"
-          aria-label={countryLabel}
-          className={buttonVariants({ variant: 'outline', className: 'w-fit whitespace-nowrap' })}
+        <Button
+          data-slot="phone-country-select-trigger"
+          variant="outline"
+          className="w-fit whitespace-nowrap"
         >
           <CountryFlag country={country} className="h-3.5 w-5 rounded-xs object-cover" />
           <span>+{getCountryCallingCode(country)}</span>
-        </ComboboxTrigger>
+        </Button>
       </div>
-      <ComboboxContent anchor={triggerRef} className="!max-h-72 w-72" placement="bottom start">
-        <ComboboxInput
-          aria-label={searchPlaceholder}
-          placeholder={searchPlaceholder}
-          showTrigger={false}
-          className="m-1 mb-0 h-8 border-input/30 bg-input/30 shadow-none"
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter') return;
-            const matches = groups.flatMap((group) => group.items);
-            if (matches.length !== 1) return;
-            event.preventDefault();
-            onCountryChange(matches[0].code);
-            setQuery('');
-          }}
-        />
-        {groups.length === 0 ? (
-          <div
-            data-slot="combobox-empty"
-            role="status"
-            className="px-2 py-6 text-center text-sm text-muted-foreground"
+      <Popover
+        triggerRef={triggerRef}
+        className="max-h-72 w-72 overflow-y-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-md outline-none"
+      >
+        <Autocomplete filter={(textValue) => matchesText(textValue)}>
+          <SearchField
+            aria-label={searchPlaceholder}
+            autoFocus
+            value={query}
+            onChange={setQuery}
+            className="m-1 mb-0"
           >
-            {emptyMessage}
-          </div>
-        ) : (
-          <ComboboxList items={groups} className="max-h-72">
-            {(group) => {
-              const index = groups.indexOf(group);
-              return (
-                <ComboboxGroup key={group.label} items={group.items}>
-                  {index > 0 && <ComboboxSeparator />}
-                  <ComboboxLabel>{group.label}</ComboboxLabel>
-                  {group.items.map((option: CountryOption) => (
-                    <ComboboxItem
-                      key={option.code}
-                      id={option.code}
-                      textValue={`${option.name} +${option.calling}`}
-                    >
-                      <CountryFlag
-                        country={option.code}
-                        className="h-3.5 w-5 rounded-xs object-cover"
-                      />
-                      <span className="flex-1 truncate">{option.name}</span>
-                      <span className="text-muted-foreground">+{option.calling}</span>
-                    </ComboboxItem>
-                  ))}
-                </ComboboxGroup>
-              );
-            }}
-          </ComboboxList>
-        )}
-      </ComboboxContent>
-    </Combobox>
+            <Input
+              placeholder={searchPlaceholder}
+              className="h-8 border-input/30 bg-input/30 shadow-none"
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                const matches = groups
+                  .flatMap((group) => group.items)
+                  .filter((option) => matchesText(`${option.name} +${option.calling}`));
+                if (matches.length !== 1) return;
+                event.preventDefault();
+                onCountryChange(matches[0].code);
+                setQuery('');
+              }}
+            />
+          </SearchField>
+          <ListBox
+            aria-label={countryLabel}
+            className="max-h-72 overflow-y-auto outline-none"
+            renderEmptyState={() => (
+              <div
+                data-slot="phone-country-empty"
+                role="status"
+                className="px-2 py-6 text-center text-sm text-muted-foreground"
+              >
+                {emptyMessage}
+              </div>
+            )}
+          >
+            {groups.map((group, index) => (
+              <ListBoxSection key={group.label} id={group.label}>
+                <Header
+                  className={`px-2 py-1.5 text-xs font-medium text-muted-foreground ${index > 0 ? 'pt-2' : ''}`}
+                >
+                  {index > 0 &&
+                    pinned.some((option) => matchesText(`${option.name} +${option.calling}`)) && (
+                      <hr className="-mx-1 mb-2 block h-px border-0 bg-border" />
+                    )}
+                  {group.label}
+                </Header>
+                {group.items.map((option) => (
+                  <ListBoxItem
+                    key={option.code}
+                    id={option.code}
+                    textValue={`${option.name} +${option.calling}`}
+                    className="relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors outline-none focus:bg-accent focus:text-accent-foreground data-[selected]:bg-accent data-[selected]:text-accent-foreground"
+                  >
+                    <CountryFlag
+                      country={option.code}
+                      className="h-3.5 w-5 rounded-xs object-cover"
+                    />
+                    <span className="flex-1 truncate">{option.name}</span>
+                    <span className="text-muted-foreground">+{option.calling}</span>
+                  </ListBoxItem>
+                ))}
+              </ListBoxSection>
+            ))}
+          </ListBox>
+        </Autocomplete>
+      </Popover>
+    </Select>
   );
 }
