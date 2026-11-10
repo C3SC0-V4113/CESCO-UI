@@ -36,6 +36,10 @@ test('opens mobile navigation and closes it after navigating', async ({ page }) 
 });
 
 test('unknown base and component routes return the styled 404 page', async ({ page }) => {
+  const baseRouteResponse = await page.goto('/components/base', { waitUntil: 'domcontentloaded' });
+  expect(baseRouteResponse?.status()).toBe(404);
+  await expect(page).toHaveURL('/components/base');
+
   for (const path of [
     '/components/nope/password-input',
     '/components/base/does-not-exist',

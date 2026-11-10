@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/components/:name',
+        source: '/components/:name((?!base$|radix$|aria$)[^/]+)',
         destination: '/components/base/:name',
         permanent: true,
       },
