@@ -82,5 +82,13 @@ for (const base of [
     await input.press('Backspace');
     await expect(input).toHaveValue('7492 0123');
     await expect(page.getByText('E.164: +50374920123')).toBeVisible();
+
+    await input.fill('749201234');
+    await input.press('Home');
+    for (let index = 0; index < 6; index++) await input.press('ArrowRight');
+    await input.press('Backspace');
+    await expect(input).toHaveValue('7492 0234');
+    expect(await input.evaluate((element: HTMLInputElement) => element.selectionStart)).toBe(6);
+    await expect(page.getByText('E.164: +50374920234')).toBeVisible();
   });
 }

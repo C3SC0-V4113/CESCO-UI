@@ -298,7 +298,7 @@ describe.each([
     render(<PhoneInput value="+15025551234" onChange={vi.fn()} />);
     const input = screen.getByRole('textbox');
     expect((input as HTMLInputElement).value).toBe('(502) 555-1234');
-    fireEvent.change(input, { target: { value: '(502' } });
-    expect((input as HTMLInputElement).value).toBe('(502');
+    fireEvent.change(input, { target: { value: '(502 555-1234' } });
+    expect((input as HTMLInputElement).value).toBe('(502 555-1234');
   });
 });

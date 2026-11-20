@@ -2,7 +2,15 @@
 
 import { cn } from 'cn';
 import { getCountries, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
-import { useState, type ComponentType, type InputHTMLAttributes, type Ref } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+  type InputHTMLAttributes,
+  type Ref,
+} from 'react';
 
 import { deriveFromValue, formatNational, toE164 } from '../lib/phone';
 
@@ -37,6 +45,16 @@ type PhoneInputCoreProps = PhoneInputProps & {
   >;
 };
 
+function caretAfterDigits(value: string, digitCount: number) {
+  if (digitCount === 0) return 0;
+  let digits = 0;
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index];
+    if (character >= '0' && character <= '9' && ++digits === digitCount) return index + 1;
+  }
+  return value.length;
+}
+
 export function PhoneInputCore({
   CountrySelector,
   InputComponent,
@@ -65,6 +83,15 @@ export function PhoneInputCore({
     lastEmittedValue: undefined as string | undefined,
     ...deriveFromValue(value, defaultCountry),
   }));
+  const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
+  useLayoutEffect(() => {
+    const pending = pendingCaret.current;
+    if (!pending) return;
+    pendingCaret.current = null;
+    if (pending.input.isConnected && document.activeElement === pending.input) {
+      pending.input.setSelectionRange(pending.position, pending.position);
+    }
+  }, [inputState.national]);
   if (value !== inputState.propValue) {
     const isEcho = value === inputState.lastEmittedValue;
     setInputState({
@@ -84,7 +111,9 @@ export function PhoneInputCore({
     }));
     onChange?.(emittedValue);
   }
-  function handleChange(raw: string) {
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const raw = event.currentTarget.value;
+    const previousDigits = national.replace(/\D/g, '');
     const deleting = raw.length < national.length;
     const digits = raw.replace(/\D/g, '');
     if (raw.trimStart().startsWith('+')) {
@@ -100,7 +129,18 @@ export function PhoneInputCore({
       emit(derived.country, nextDigits, derived.national);
       return;
     }
-    emit(country, digits, deleting ? raw.replace(/\+/g, '') : formatNational(country, digits));
+    const deletingDigit = digits.length < previousDigits.length;
+    const display =
+      deleting && !deletingDigit ? raw.replace(/\+/g, '') : formatNational(country, digits);
+    if (deletingDigit) {
+      const selectionStart = event.currentTarget.selectionStart ?? raw.length;
+      const digitsBeforeCaret = raw.slice(0, selectionStart).replace(/\D/g, '').length;
+      pendingCaret.current = {
+        input: event.currentTarget,
+        position: caretAfterDigits(display, digitsBeforeCaret),
+      };
+    }
+    emit(country, digits, display);
   }
   return (
     <div data-slot="phone-input" className="flex items-stretch gap-2">
@@ -131,7 +171,7 @@ export function PhoneInputCore({
         placeholder={placeholder}
         className={cn('min-w-0 flex-1', className)}
         value={national}
-        onChange={(event) => handleChange(event.target.value)}
+        onChange={handleChange}
         onBlur={onBlur}
         disabled={disabled}
         aria-invalid={invalid}
