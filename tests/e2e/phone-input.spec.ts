@@ -32,8 +32,12 @@ for (const base of [
     await expect
       .poll(async () => (await pickerContent.boundingBox())?.width ?? 0)
       .toBeGreaterThanOrEqual(280);
+    await expect
+      .poll(async () => (await pickerContent.boundingBox())?.height ?? 0)
+      .toBeLessThanOrEqual(300);
     const selectedCountry = page.getByRole('option', { name: /El Salvador \+503/ });
     await expect(selectedCountry).toBeVisible();
+    await expect(selectedCountry).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(async () => {
         const option = await selectedCountry.boundingBox();

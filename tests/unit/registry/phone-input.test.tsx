@@ -260,6 +260,7 @@ describe.each([
     fireEvent.change(search, { target: { value: 'zzzzzz' } });
     expect(screen.queryAllByRole('option')).toHaveLength(0);
     expect(screen.getByText('No results')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('No results');
     fireEvent.change(search, { target: { value: '' } });
     expect(screen.getByText('Suggested')).toBeTruthy();
     expect(screen.getByText('All countries')).toBeTruthy();
