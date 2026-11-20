@@ -32,10 +32,10 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${e2ePort}`,
+    command: `npm run build && npm run start -- --hostname 127.0.0.1 --port ${e2ePort}`,
     url: baseUrl,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 600_000,
     env: { ...process.env, PLAYWRIGHT_E2E: '1' },
   },
 });
