@@ -1,5 +1,6 @@
 import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getCountries } from 'libphonenumber-js';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PhoneInput as Aria } from '@/registry/bases/aria/phone-input/phone-input';
@@ -51,6 +52,18 @@ describe.each([
   function openCountryPicker() {
     fireEvent.click(screen.getByTestId('phone-country-trigger'));
   }
+
+  it('does not server-render locale-dependent country names', () => {
+    const view = renderToString(<PhoneInput value="" onChange={vi.fn()} />);
+    const names = new Intl.DisplayNames(['en'], { type: 'region' });
+
+    // Base UI serializes the selected country value; this checks the picker option collection.
+    const localizedCountryNames = getCountries()
+      .filter((country) => country !== 'US')
+      .map((country) => names.of(country))
+      .filter((name): name is string => Boolean(name));
+    expect(localizedCountryNames.filter((name) => view.includes(name))).toEqual([]);
+  });
 
   it('formats typed national numbers and emits E.164', () => {
     const onChange = vi.fn();
