@@ -58,6 +58,36 @@ describe.each([
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '74920123' } });
     expect(onChange).toHaveBeenLastCalledWith('+50374920123');
   });
+  it.each([
+    {
+      country: 'SV' as const,
+      overflow: '749201234',
+      deleted: '74920123',
+      formatted: '7492 0123',
+      e164: '+50374920123',
+    },
+    {
+      country: 'US' as const,
+      overflow: '50255512345',
+      deleted: '5025551234',
+      formatted: '(502) 555-1234',
+      e164: '+15025551234',
+    },
+  ])(
+    'reformats $country after deleting an overflow digit',
+    ({ country, overflow, deleted, formatted, e164 }) => {
+      const onChange = vi.fn();
+      render(<PhoneInput value="" onChange={onChange} defaultCountry={country} />);
+      const input = screen.getByRole('textbox') as HTMLInputElement;
+
+      fireEvent.change(input, { target: { value: overflow } });
+      expect(input.value).toBe(overflow);
+      fireEvent.change(input, { target: { value: deleted } });
+
+      expect(input.value).toBe(formatted);
+      expect(onChange).toHaveBeenLastCalledWith(e164);
+    }
+  );
   it.each(['+44 7911 123456', '+447911123456'])(
     'adopts a foreign calling code from %s',
     (value) => {
