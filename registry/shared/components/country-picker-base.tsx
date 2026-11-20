@@ -95,6 +95,7 @@ function CountryPicker({
         if (option) onCountryChange(option.code);
       }}
       itemToStringLabel={(option: CountryOption) => `${option.name} +${option.calling}`}
+      itemToStringValue={(option: CountryOption) => option.code}
       disabled={isDisabled}
     >
       <ComboboxTrigger

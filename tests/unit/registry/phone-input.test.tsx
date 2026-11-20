@@ -53,17 +53,19 @@ describe.each([
     fireEvent.click(screen.getByTestId('phone-country-trigger'));
   }
 
-  it('does not server-render locale-dependent country names', () => {
-    const view = renderToString(<PhoneInput value="" onChange={vi.fn()} />);
-    const names = new Intl.DisplayNames(['en'], { type: 'region' });
-
-    // Base UI serializes the selected country value; this checks the picker option collection.
-    const localizedCountryNames = getCountries()
-      .filter((country) => country !== 'US')
-      .map((country) => names.of(country))
-      .filter((name): name is string => Boolean(name));
-    expect(localizedCountryNames.filter((name) => view.includes(name))).toEqual([]);
-  });
+  it.each(['HK', 'US'] as const)(
+    'does not server-render locale-dependent country names with %s selected',
+    (defaultCountry) => {
+      const view = renderToString(
+        <PhoneInput value="" onChange={vi.fn()} defaultCountry={defaultCountry} />
+      );
+      const names = new Intl.DisplayNames(['en'], { type: 'region' });
+      const localizedCountryNames = getCountries()
+        .map((country) => names.of(country))
+        .filter((name): name is string => Boolean(name));
+      expect(localizedCountryNames.filter((name) => view.includes(name))).toEqual([]);
+    }
+  );
 
   it('formats typed national numbers and emits E.164', () => {
     const onChange = vi.fn();
