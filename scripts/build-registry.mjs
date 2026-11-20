@@ -80,7 +80,24 @@ mkdirSync(tmp, { recursive: true });
 try {
   for (const base of BASES) {
     const registryFile = path.join(tmp, `registry-${base}.json`);
-    writeFileSync(registryFile, source.replaceAll('{base}', base));
+    const registry = JSON.parse(source.replaceAll('{base}', base));
+    for (const item of registry.items) {
+      if (!Object.hasOwn(item, 'registryDependenciesByBase')) continue;
+      const dependenciesByBase = item.registryDependenciesByBase;
+      if (
+        !dependenciesByBase ||
+        typeof dependenciesByBase !== 'object' ||
+        !Object.hasOwn(dependenciesByBase, base) ||
+        !Array.isArray(dependenciesByBase[base])
+      ) {
+        throw new Error(
+          `Registry item "${item.name}" is missing registryDependenciesByBase for base "${base}".`
+        );
+      }
+      item.registryDependencies = dependenciesByBase[base];
+      delete item.registryDependenciesByBase;
+    }
+    writeFileSync(registryFile, `${JSON.stringify(registry, null, 2)}\n`);
 
     const baseOut = path.join(tmp, 'out', base);
     execFileSync('npx', ['shadcn', 'build', registryFile, '-o', baseOut], {
