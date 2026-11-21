@@ -83,6 +83,14 @@ describe.each([
     }
   );
 
+  it('server-renders an initial international value with its country and national input', () => {
+    const view = renderToString(<PhoneInput value="+447911123456" defaultCountry="US" />);
+
+    expect(view).toMatch(/\+<!-- -->44|\+44/);
+    expect(view).toContain('value="7911123456"');
+    expect(view).not.toContain('value="+44 7911 123456"');
+  });
+
   it('formats typed national numbers and emits E.164', () => {
     const onChange = vi.fn();
     render(<PhoneInput value="" onChange={onChange} defaultCountry="SV" />);

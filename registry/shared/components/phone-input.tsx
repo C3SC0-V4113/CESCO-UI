@@ -71,6 +71,10 @@ export type PhoneInputRootProps = Pick<
   children: ReactNode;
 };
 
+type PhoneInputRootInternalProps = PhoneInputRootProps & {
+  hasInitialCountryPicker?: boolean;
+};
+
 export type PhoneInputCountryProps = Pick<
   PhoneInputProps,
   | 'pinnedCountries'
@@ -142,14 +146,18 @@ export function PhoneInputRoot({
   emptyMessage = 'No results',
   pinnedGroupLabel = 'Suggested',
   allGroupLabel = 'All countries',
-}: PhoneInputRootProps) {
+  hasInitialCountryPicker = false,
+}: PhoneInputRootInternalProps) {
+  const rootCountry = controlledCountry ?? defaultCountry;
   const [state, setState] = useState(() => ({
     propValue: value,
     lastEmittedValue: undefined as string | undefined,
-    ...deriveFromValueWithFixedCountry(value, controlledCountry ?? defaultCountry),
+    // PhoneInput's hint keeps SSR and first-client output aligned. Composed roots discover a picker after mount and reconcile then.
+    ...(hasInitialCountryPicker
+      ? deriveFromValue(value, rootCountry)
+      : deriveFromValueWithFixedCountry(value, rootCountry)),
   }));
   const countryPickerCount = useRef(0);
-  const rootCountry = controlledCountry ?? defaultCountry;
   const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
   useLayoutEffect(() => {
     const pending = pendingCaret.current;
@@ -417,6 +425,7 @@ export function PhoneInputCore({
       emptyMessage={emptyMessage}
       pinnedGroupLabel={pinnedGroupLabel}
       allGroupLabel={allGroupLabel}
+      hasInitialCountryPicker
     >
       <div data-slot="phone-input" className="flex items-stretch gap-2">
         <PhoneInputCountryCore
