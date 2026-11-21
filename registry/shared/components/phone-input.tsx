@@ -6,6 +6,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -29,6 +30,7 @@ import {
 import type { CountryPickerProps } from './country-picker-base';
 
 const EMPTY_PINNED_COUNTRIES: CountryCode[] = [];
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 export type PhoneInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -69,10 +71,6 @@ export type PhoneInputRootProps = Pick<
   children: ReactNode;
 };
 
-type PhoneInputRootInternalProps = PhoneInputRootProps & {
-  canSwitchCountryOnInput?: boolean;
-};
-
 export type PhoneInputCountryProps = Pick<
   PhoneInputProps,
   | 'pinnedCountries'
@@ -108,6 +106,7 @@ type PhoneInputContextValue = {
   allGroupLabel: string;
   setCountry: (country: CountryCode) => void;
   onNumberChange: (raw: string, input: HTMLInputElement) => void;
+  registerCountryPicker: () => () => void;
 };
 
 const PhoneInputContext = createContext<PhoneInputContextValue | null>(null);
@@ -128,16 +127,6 @@ function caretAfterDigits(value: string, digitCount: number) {
   return value.length;
 }
 
-function deriveRootValue(
-  value: string | undefined,
-  country: CountryCode,
-  canSwitchCountryOnInput: boolean
-) {
-  return canSwitchCountryOnInput
-    ? deriveFromValue(value, country)
-    : deriveFromValueWithFixedCountry(value, country);
-}
-
 export function PhoneInputRoot({
   children,
   value,
@@ -153,13 +142,14 @@ export function PhoneInputRoot({
   emptyMessage = 'No results',
   pinnedGroupLabel = 'Suggested',
   allGroupLabel = 'All countries',
-  canSwitchCountryOnInput = false,
-}: PhoneInputRootInternalProps) {
+}: PhoneInputRootProps) {
   const [state, setState] = useState(() => ({
     propValue: value,
     lastEmittedValue: undefined as string | undefined,
-    ...deriveRootValue(value, controlledCountry ?? defaultCountry, canSwitchCountryOnInput),
+    ...deriveFromValueWithFixedCountry(value, controlledCountry ?? defaultCountry),
   }));
+  const countryPickerCount = useRef(0);
+  const rootCountry = controlledCountry ?? defaultCountry;
   const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
   useLayoutEffect(() => {
     const pending = pendingCaret.current;
@@ -169,19 +159,41 @@ export function PhoneInputRoot({
       pending.input.setSelectionRange(pending.position, pending.position);
     }
   }, [state.national]);
-  if (value !== state.propValue) {
+  useIsomorphicLayoutEffect(() => {
+    if (value === state.propValue) return;
     const isEcho = value === state.lastEmittedValue;
     setState({
       ...(isEcho
         ? state
-        : deriveRootValue(value, controlledCountry ?? defaultCountry, canSwitchCountryOnInput)),
+        : countryPickerCount.current > 0
+          ? deriveFromValue(value, rootCountry)
+          : deriveFromValueWithFixedCountry(value, rootCountry)),
       propValue: value,
       lastEmittedValue: undefined,
     });
-  }
+  }, [rootCountry, state, value]);
 
   const selectedCountry = controlledCountry ?? state.country;
   const national = state.national;
+  const registerCountryPicker = useCallback(() => {
+    countryPickerCount.current += 1;
+    if (countryPickerCount.current === 1 && !controlledCountry) {
+      const derived = deriveFromValue(value, rootCountry);
+      setState((current) => {
+        if (
+          current.propValue !== value ||
+          current.lastEmittedValue ||
+          (current.country === derived.country && current.national === derived.national)
+        ) {
+          return current;
+        }
+        return { ...current, ...derived };
+      });
+    }
+    return () => {
+      countryPickerCount.current = Math.max(0, countryPickerCount.current - 1);
+    };
+  }, [controlledCountry, rootCountry, value]);
   const emit = useCallback(
     (
       nextCountry: CountryCode,
@@ -226,9 +238,8 @@ export function PhoneInputRoot({
           .sort((a, b) => b.calling.length - a.calling.length)[0];
         const matchesRootCountry = callingCode?.calling === getCountryCallingCode(selectedCountry);
         const nextDigits = matchesRootCountry ? digits.slice(callingCode.calling.length) : digits;
-        // A composed input without a country picker keeps its root country fixed.
-        // The all-in-one wrapper opts into adopting international calling codes below.
-        if (canSwitchCountryOnInput) {
+        // A root without a mounted country picker keeps its country fixed.
+        if (countryPickerCount.current > 0) {
           const derived = deriveFromValue(raw, selectedCountry);
           emit(derived.country, derived.national.replace(/\D/g, ''), derived.national);
           return;
@@ -255,7 +266,7 @@ export function PhoneInputRoot({
       }
       emit(selectedCountry, digits, display);
     },
-    [canSwitchCountryOnInput, emit, national, selectedCountry]
+    [emit, national, selectedCountry]
   );
 
   const context = useMemo<PhoneInputContextValue>(
@@ -273,6 +284,7 @@ export function PhoneInputRoot({
       allGroupLabel,
       setCountry,
       onNumberChange,
+      registerCountryPicker,
     }),
     [
       selectedCountry,
@@ -287,6 +299,7 @@ export function PhoneInputRoot({
       allGroupLabel,
       setCountry,
       onNumberChange,
+      registerCountryPicker,
     ]
   );
   return <PhoneInputContext.Provider value={context}>{children}</PhoneInputContext.Provider>;
@@ -304,6 +317,7 @@ export function PhoneInputCountryCore({
   allGroupLabel,
 }: PhoneInputCountryProps & { CountrySelector: ComponentType<CountryPickerProps> }) {
   const context = usePhoneInputContext();
+  useIsomorphicLayoutEffect(() => context.registerCountryPicker(), [context.registerCountryPicker]);
   return (
     <CountrySelector
       country={context.country}
@@ -403,7 +417,6 @@ export function PhoneInputCore({
       emptyMessage={emptyMessage}
       pinnedGroupLabel={pinnedGroupLabel}
       allGroupLabel={allGroupLabel}
-      canSwitchCountryOnInput
     >
       <div data-slot="phone-input" className="flex items-stretch gap-2">
         <PhoneInputCountryCore

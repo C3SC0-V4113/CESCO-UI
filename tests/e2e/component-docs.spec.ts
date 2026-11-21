@@ -146,8 +146,8 @@ for (const base of bases) {
     await expect(composedInput).toBeVisible();
     await expect(countryTrigger).toContainText('+503');
     await composedInput.fill('+1 415 555 2671');
-    await expect(composedInput).toHaveValue('+1 415 555 2671');
-    await expect(countryTrigger).toContainText('+503');
+    await expect(composedInput).toHaveValue('(415) 555-2671');
+    await expect(countryTrigger).toContainText('+1');
     await expect(composition.getByText('E.164: +14155552671')).toBeVisible();
   });
 }
