@@ -6,6 +6,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffectEvent,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -158,7 +159,17 @@ export function PhoneInputRoot({
       : deriveFromValueWithFixedCountry(value, rootCountry)),
   }));
   const countryPickerCount = useRef(0);
+  const previousRootCountry = useRef(rootCountry);
+  const rootCountryRef = useRef(rootCountry);
+  const controlledCountryRef = useRef(controlledCountry);
+  const valueRef = useRef(value);
+  const pendingCountryChangeEmission = useRef<string | null>(null);
   const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
+  useIsomorphicLayoutEffect(() => {
+    rootCountryRef.current = rootCountry;
+    controlledCountryRef.current = controlledCountry;
+    valueRef.current = value;
+  }, [controlledCountry, rootCountry, value]);
   useLayoutEffect(() => {
     const pending = pendingCaret.current;
     if (!pending) return;
@@ -181,15 +192,55 @@ export function PhoneInputRoot({
     });
   }, [rootCountry, state, value]);
 
+  const emitFromEffect = useEffectEvent((nextValue: string) => onChange?.(nextValue));
+  // A controlled country can change independently of value; reconcile its display and report only a real E.164 transition.
+  useIsomorphicLayoutEffect(() => {
+    const previousCountry = previousRootCountry.current;
+    previousRootCountry.current = rootCountry;
+    if (previousCountry === rootCountry || value !== state.propValue) return;
+
+    const digits = state.national.replace(/\D/g, '');
+    const previousE164 = state.national.trimStart().startsWith('+')
+      ? toE164International(state.national)
+      : toE164(state.country, digits);
+    const derived =
+      countryPickerCount.current > 0
+        ? { country: rootCountry, national: formatNational(rootCountry, digits) }
+        : deriveFromValueWithFixedCountry(state.national, rootCountry);
+    const nextE164 = derived.national.trimStart().startsWith('+')
+      ? toE164International(derived.national)
+      : toE164(rootCountry, derived.national);
+    const e164Changed = previousE164 !== nextE164;
+
+    setState((current) => {
+      if (current.propValue !== state.propValue) return current;
+      return {
+        ...current,
+        ...derived,
+        lastEmittedValue: e164Changed ? nextE164 : undefined,
+      };
+    });
+    if (e164Changed) pendingCountryChangeEmission.current = nextE164;
+  }, [rootCountry, state, value]);
+  // Send the matching value after the layout reconciliation has committed.
+  /* eslint-disable react-doctor/no-pass-data-to-parent, react-doctor/no-prop-callback-in-effect */
+  useEffect(() => {
+    const nextValue = pendingCountryChangeEmission.current;
+    if (nextValue === null) return;
+    pendingCountryChangeEmission.current = null;
+    emitFromEffect(nextValue);
+  }, [state]);
+  /* eslint-enable react-doctor/no-pass-data-to-parent, react-doctor/no-prop-callback-in-effect */
+
   const selectedCountry = controlledCountry ?? state.country;
   const national = state.national;
   const registerCountryPicker = useCallback(() => {
     countryPickerCount.current += 1;
-    if (countryPickerCount.current === 1 && !controlledCountry) {
-      const derived = deriveFromValue(value, rootCountry);
+    if (countryPickerCount.current === 1 && !controlledCountryRef.current) {
+      const derived = deriveFromValue(valueRef.current, rootCountryRef.current);
       setState((current) => {
         if (
-          current.propValue !== value ||
+          current.propValue !== valueRef.current ||
           current.lastEmittedValue ||
           (current.country === derived.country && current.national === derived.national)
         ) {
@@ -200,8 +251,19 @@ export function PhoneInputRoot({
     }
     return () => {
       countryPickerCount.current = Math.max(0, countryPickerCount.current - 1);
+      if (countryPickerCount.current === 0) {
+        setState((current) => {
+          const currentValue = current.national.trimStart().startsWith('+')
+            ? toE164International(current.national)
+            : toE164(current.country, current.national);
+          const fixed = deriveFromValueWithFixedCountry(currentValue, rootCountryRef.current);
+          if (current.country === fixed.country && current.national === fixed.national)
+            return current;
+          return { ...current, ...fixed, lastEmittedValue: undefined };
+        });
+      }
     };
-  }, [controlledCountry, rootCountry, value]);
+  }, []);
   const emit = useCallback(
     (
       nextCountry: CountryCode,
