@@ -8,18 +8,16 @@ test('shows the registry home heading', async ({ page }) => {
 
 test('shows desktop navigation and marks the current component active', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/components/password-input');
+  await page.goto('/components/radix/password-input');
 
   const navigation = page.getByRole('navigation', { name: 'Registry components' });
   await expect(navigation).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Password Input' })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
-  await expect(navigation.getByRole('link', { name: 'Phone Input' })).not.toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  const password = navigation.getByRole('link', { name: 'Password Input' });
+  const phone = navigation.getByRole('link', { name: 'Phone Input' });
+  await expect(password).toHaveAttribute('href', '/components/radix/password-input');
+  await expect(password).toHaveAttribute('aria-current', 'page');
+  await expect(phone).toHaveAttribute('href', '/components/radix/phone-input');
+  await expect(phone).not.toHaveAttribute('aria-current', 'page');
 });
 
 test('opens mobile navigation and closes it after navigating', async ({ page }) => {
@@ -33,16 +31,53 @@ test('opens mobile navigation and closes it after navigating', async ({ page }) 
   await expect(navigation).toBeVisible();
 
   await navigation.getByRole('link', { name: 'Phone Input' }).click();
-  await expect(page).toHaveURL(/\/components\/phone-input$/);
+  await expect(page).toHaveURL(/\/components\/base\/phone-input$/);
   await expect(navigation).toBeHidden();
 });
 
-test('unknown component routes return the styled 404 page', async ({ page }) => {
-  for (const path of ['/components/does-not-exist', '/components/password-input/extra']) {
+test('unknown base and component routes return the styled 404 page', async ({ page }) => {
+  const baseRouteResponse = await page.goto('/components/base', { waitUntil: 'domcontentloaded' });
+  expect(baseRouteResponse?.status()).toBe(404);
+  await expect(page).toHaveURL('/components/base');
+
+  for (const path of [
+    '/components/nope/password-input',
+    '/components/base/does-not-exist',
+    '/components/password-input/extra',
+  ]) {
     const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
 
     expect(response?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'Component not found' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Registry components' })).toBeVisible();
   }
+});
+
+test('404 page has no console errors', async ({ page }) => {
+  const errors: string[] = [];
+  const notFoundDocumentUrls = new Set<string>();
+  page.on('response', (response) => {
+    if (response.status() === 404 && response.request().resourceType() === 'document') {
+      notFoundDocumentUrls.add(response.url());
+    }
+  });
+  page.on('console', (message) => {
+    const isExpectedDocumentResponse =
+      message.text() ===
+        'Failed to load resource: the server responded with a status of 404 (Not Found)' &&
+      notFoundDocumentUrls.has(message.location().url);
+
+    if (message.type() === 'error' && !isExpectedDocumentResponse) {
+      errors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+
+  const response = await page.goto('/components/base/missing-component', {
+    waitUntil: 'domcontentloaded',
+  });
+
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { name: 'Component not found' })).toBeVisible();
+  expect(errors).toEqual([]);
 });

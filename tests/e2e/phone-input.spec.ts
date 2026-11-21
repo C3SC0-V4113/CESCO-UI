@@ -1,25 +1,32 @@
 import { expect, test } from '@playwright/test';
 
-import { selectBase } from './helpers';
+import type { Page } from '@playwright/test';
 
-for (const base of [
-  { value: 'base', label: 'Base UI' },
-  { value: 'radix', label: 'Radix' },
-  { value: 'aria', label: 'React Aria' },
-]) {
-  test(`phone input formats a number and emits E.164 on ${base.label}`, async ({ page }) => {
+const bases = [
+  { id: 'base', label: 'Base UI' },
+  { id: 'radix', label: 'Radix' },
+  { id: 'aria', label: 'React Aria' },
+] as const;
+
+async function openPreview(page: Page, baseId: string) {
+  await page.goto(`/components/${baseId}/phone-input`, { waitUntil: 'domcontentloaded' });
+  const preview = page.getByRole('region', { name: 'Preview' });
+  await expect(preview.locator('[data-preview-hydrated]')).toHaveAttribute(
+    'data-preview-hydrated',
+    'true'
+  );
+  return preview;
+}
+
+for (const base of bases) {
+  test(`phone input formats a number on ${base.label}`, async ({ page }) => {
     const runtimeErrors: string[] = [];
     page.on('pageerror', (error) => runtimeErrors.push(error.message));
     page.on('console', (message) => {
       if (message.type() === 'error') runtimeErrors.push(message.text());
     });
-    await page.goto('/components/phone-input', { waitUntil: 'domcontentloaded' });
-    const baseSelector = page.getByRole('combobox', { name: 'Select component base' });
-    await expect(baseSelector).toBeVisible();
-    await selectBase(page, base.label);
-    const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
-    await expect(preview).toBeVisible();
-    await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
+    const preview = await openPreview(page, base.id);
+
     const countryTrigger = preview.locator('[data-slot="phone-country-trigger"]');
     await countryTrigger.click();
     const countrySearch = page.getByPlaceholder('Search country');
@@ -35,7 +42,7 @@ for (const base of [
     await expect
       .poll(async () => (await pickerContent.boundingBox())?.height ?? 0)
       .toBeLessThanOrEqual(300);
-    const selectedCountry = page.getByRole('option', { name: /El Salvador \+503/ });
+    const selectedCountry = page.getByRole('option', { name: /^United States \+1/ });
     await expect(selectedCountry).toBeVisible();
     await expect(selectedCountry).toHaveAttribute('aria-selected', 'true');
     await expect
@@ -60,35 +67,38 @@ for (const base of [
         return Boolean(name && code && name.x + name.width <= code.x);
       })
       .toBe(true);
+    await countrySearch.fill('El Salvador');
+    await page.getByRole('option', { name: /El Salvador \+503/ }).click();
+    await expect(countryTrigger).toContainText('+503');
+    await countryTrigger.click();
     await countrySearch.fill('United States');
-    await page.getByRole('option', { name: /United States \+1/ }).click();
+    await page.getByRole('option', { name: /^United States \+1/ }).click();
     await expect(countryTrigger).toContainText('+1');
-    await page.keyboard.press('Escape');
-    await preview.getByRole('textbox', { name: 'Phone number (all countries)' }).fill('74920123');
-    await expect(page.getByText('E.164: +174920123')).toBeVisible();
+
+    const phone = preview.getByRole('textbox', { name: 'Phone number' });
+    await phone.fill('2025550123');
+    await expect(phone).toHaveValue('(202) 555-0123');
+    await expect(preview.getByText('E.164: +12025550123')).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 
   test(`phone input restores formatting after deleting an overflow digit on ${base.label}`, async ({
     page,
   }) => {
-    await page.goto('/components/phone-input', { waitUntil: 'domcontentloaded' });
-    await selectBase(page, base.label);
-    const preview = page.locator(`[data-preview-base="${base.value}"]`).first();
-    await expect(preview).toHaveAttribute('data-preview-hydrated', 'true');
-    const input = preview.getByRole('textbox', { name: 'Phone number (all countries)' });
-    await input.pressSequentially('749201234');
-    await expect(input).toHaveValue('749201234');
+    const preview = await openPreview(page, base.id);
+    const input = preview.getByRole('textbox', { name: 'Phone number' });
+    await input.pressSequentially('50255512345');
+    await expect(input).toHaveValue('50255512345');
     await input.press('Backspace');
-    await expect(input).toHaveValue('7492 0123');
-    await expect(page.getByText('E.164: +50374920123')).toBeVisible();
+    await expect(input).toHaveValue('(502) 555-1234');
+    await expect(preview.getByText('E.164: +15025551234')).toBeVisible();
 
-    await input.fill('749201234');
+    await input.fill('50255512345');
     await input.press('Home');
     for (let index = 0; index < 6; index++) await input.press('ArrowRight');
     await input.press('Backspace');
-    await expect(input).toHaveValue('7492 0234');
-    expect(await input.evaluate((element: HTMLInputElement) => element.selectionStart)).toBe(6);
-    await expect(page.getByText('E.164: +50374920234')).toBeVisible();
+    await expect(input).toHaveValue('(502) 551-2345');
+    expect(await input.evaluate((element: HTMLInputElement) => element.selectionStart)).toBe(8);
+    await expect(preview.getByText('E.164: +15025512345')).toBeVisible();
   });
 }

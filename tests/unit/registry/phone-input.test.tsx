@@ -1,5 +1,6 @@
 import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getCountries } from 'libphonenumber-js';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PhoneInput as Aria } from '@/registry/bases/aria/phone-input/phone-input';
@@ -51,6 +52,20 @@ describe.each([
   function openCountryPicker() {
     fireEvent.click(screen.getByTestId('phone-country-trigger'));
   }
+
+  it.each(['HK', 'US'] as const)(
+    'does not server-render locale-dependent country names with %s selected',
+    (defaultCountry) => {
+      const view = renderToString(
+        <PhoneInput value="" onChange={vi.fn()} defaultCountry={defaultCountry} />
+      );
+      const names = new Intl.DisplayNames(['en'], { type: 'region' });
+      const localizedCountryNames = getCountries()
+        .map((country) => names.of(country))
+        .filter((name): name is string => Boolean(name));
+      expect(localizedCountryNames.filter((name) => view.includes(name))).toEqual([]);
+    }
+  );
 
   it('formats typed national numbers and emits E.164', () => {
     const onChange = vi.fn();
@@ -204,6 +219,21 @@ describe.each([
       'Contact country'
     );
     expect(screen.getByText('+1')).toBeTruthy();
+  });
+  it('provides the React Aria Select with an accessible name', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      render(<PhoneInput value="" onChange={vi.fn()} countryLabel="Country selector" />);
+
+      expect(
+        warn.mock.calls.filter(([message]) =>
+          String(message).includes('If you do not provide a visible label')
+        )
+      ).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
   });
   it('does not mark the country trigger invalid when aria-invalid is false', () => {
     render(<PhoneInput value="" onChange={vi.fn()} aria-invalid="false" />);

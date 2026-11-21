@@ -48,8 +48,14 @@ export function CountryPicker({
   const listContainerRef = useRef<HTMLDivElement>(null);
   const filter = useFilter({ sensitivity: 'base' });
   const { pinned, all } = useMemo(
-    () => getCountryOptions(locale, pinnedCountries, countries),
-    [locale, pinnedCountries, countries]
+    () =>
+      isOpen
+        ? getCountryOptions(locale, pinnedCountries, countries)
+        : {
+            pinned: [],
+            all: [{ code: country, name: country, calling: getCountryCallingCode(country) }],
+          },
+    [countries, country, isOpen, locale, pinnedCountries]
   );
   const groups = useMemo(
     () =>
@@ -104,6 +110,7 @@ export function CountryPicker({
   return (
     <Select
       data-slot="phone-country-select"
+      aria-label={countryLabel}
       isOpen={isOpen}
       selectedKey={country}
       onSelectionChange={(key) => {

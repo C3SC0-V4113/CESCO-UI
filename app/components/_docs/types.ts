@@ -1,3 +1,4 @@
+import type { ComponentBase } from '../_components/types';
 import type { ReactNode } from 'react';
 
 export type ApiProp = { name: string; type: string; defaultValue: string; description: string };
@@ -6,14 +7,9 @@ export type ComponentExample<Id extends string = string> = {
   title: string;
   description: string;
   source: string;
-  extraUiDependencies: string[];
   preview: ReactNode;
 };
-export type ComponentDocs<Id extends string = string> = {
-  usage: string;
-  examples: ComponentExample<Id>[];
-  api: ApiProp[];
-};
+export type ComponentDocsPage = (props: { base: ComponentBase }) => ReactNode;
 
 type ExampleDefinition = Omit<ComponentExample, 'id'>;
 
