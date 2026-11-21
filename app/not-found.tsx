@@ -20,7 +20,7 @@ export default function NotFound() {
         <EmptyDescription>The component you are looking for does not exist.</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="link" render={<Link href="/" />}>
+        <Button variant="link" nativeButton={false} render={<Link href="/" />}>
           Browse components
         </Button>
       </EmptyContent>

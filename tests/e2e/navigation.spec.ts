@@ -52,3 +52,32 @@ test('unknown base and component routes return the styled 404 page', async ({ pa
     await expect(page.getByRole('navigation', { name: 'Registry components' })).toBeVisible();
   }
 });
+
+test('404 page has no console errors', async ({ page }) => {
+  const errors: string[] = [];
+  const notFoundDocumentUrls = new Set<string>();
+  page.on('response', (response) => {
+    if (response.status() === 404 && response.request().resourceType() === 'document') {
+      notFoundDocumentUrls.add(response.url());
+    }
+  });
+  page.on('console', (message) => {
+    const isExpectedDocumentResponse =
+      message.text() ===
+        'Failed to load resource: the server responded with a status of 404 (Not Found)' &&
+      notFoundDocumentUrls.has(message.location().url);
+
+    if (message.type() === 'error' && !isExpectedDocumentResponse) {
+      errors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+
+  const response = await page.goto('/components/base/missing-component', {
+    waitUntil: 'domcontentloaded',
+  });
+
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { name: 'Component not found' })).toBeVisible();
+  expect(errors).toEqual([]);
+});

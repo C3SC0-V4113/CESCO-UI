@@ -48,7 +48,7 @@ export default function Home() {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button variant="outline" render={<Link href="/" />}>
+            <Button variant="outline" nativeButton={false} render={<Link href="/" />}>
               Browse components
             </Button>
           </EmptyContent>
