@@ -41,7 +41,70 @@ export function toE164(country: CountryCode, national: string) {
 }
 
 export function formatNational(country: CountryCode, national: string) {
-  return new AsYouType(country).input(national);
+  const formatted = new AsYouType(country).input(national);
+  const digits = national.replace(/\D/g, '');
+  if (!digits) return formatted;
+
+  try {
+    const parsed = parsePhoneNumberWithError(`+${getCountryCallingCode(country)}${digits}`);
+    const formattedNational = parsed.formatNational();
+    const formattedDigits = formattedNational.replace(/\D/g, '');
+    const prefixDigits = formattedDigits.endsWith(parsed.nationalNumber)
+      ? formattedDigits.slice(0, formattedDigits.length - parsed.nationalNumber.length)
+      : '';
+    if (!prefixDigits) return formatted;
+
+    let matchedPrefixDigits = 0;
+    let prefixEnd = 0;
+    for (let index = 0; index < formattedNational.length; index++) {
+      const character = formattedNational[index];
+      if (character >= '0' && character <= '9') {
+        if (character !== prefixDigits[matchedPrefixDigits]) return formatted;
+        matchedPrefixDigits++;
+        if (matchedPrefixDigits === prefixDigits.length) {
+          prefixEnd = index + 1;
+          break;
+        }
+      }
+    }
+    if (matchedPrefixDigits !== prefixDigits.length) return formatted;
+    return formattedNational.slice(prefixEnd).trimStart();
+  } catch {
+    return formatted;
+  }
+}
+
+export function formatInternational(value: string) {
+  return new AsYouType().input(value);
+}
+
+export function toE164International(value: string) {
+  const formatter = new AsYouType();
+  formatter.input(value);
+  return formatter.getNumber()?.number ?? `+${value.replace(/\D/g, '')}`;
+}
+
+export function deriveFromValueWithFixedCountry(value: string | undefined, country: CountryCode) {
+  if (!value) return { country, national: '' };
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('+')) {
+    return { country, national: formatNational(country, trimmed) };
+  }
+
+  const digits = trimmed.replace(/\D/g, '');
+  const callingCode = getCountries()
+    .map((candidate) => ({ calling: getCountryCallingCode(candidate) }))
+    .filter(({ calling }) => digits.startsWith(calling))
+    .sort((a, b) => b.calling.length - a.calling.length)[0];
+
+  if (callingCode?.calling === getCountryCallingCode(country)) {
+    return {
+      country,
+      national: formatNational(country, digits.slice(callingCode.calling.length)),
+    };
+  }
+
+  return { country, national: formatInternational(trimmed) };
 }
 
 export function deriveFromValue(value: string | undefined, fallbackCountry: CountryCode) {

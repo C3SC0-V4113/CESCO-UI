@@ -22,7 +22,7 @@ const pages = [
     input: '#phone-default',
     example: '#example-restricted-countries',
     codeMarker: '@/components/phone-input',
-    apiRow: 'defaultCountry',
+    apiRow: 'PhoneInputRoot children',
     examples: [
       'Default country',
       'Disabled',
@@ -31,6 +31,8 @@ const pages = [
       'Pinned countries',
       'Spanish locale',
       'With Field',
+      'Without country picker',
+      'Composition',
     ],
   },
 ] as const;
@@ -142,6 +144,40 @@ for (const component of pages) {
       );
     });
   }
+}
+
+for (const base of bases) {
+  test(`phone input composed examples work on ${base.label}`, async ({ page }) => {
+    await page.goto(`/components/${base.id}/phone-input`, { waitUntil: 'domcontentloaded' });
+
+    const fixedCountry = page.locator('#example-without-country-picker');
+    await expect(fixedCountry.locator('[data-preview-hydrated]')).toHaveAttribute(
+      'data-preview-hydrated',
+      'true'
+    );
+    const fixedInput = fixedCountry.getByRole('textbox', { name: 'Phone number' });
+    await fixedInput.fill('74920123');
+    await expect(fixedInput).toHaveValue('7492 0123');
+    await expect(fixedCountry.getByText('E.164: +50374920123')).toBeVisible();
+    await expect(fixedCountry.locator('[data-slot="phone-country-trigger"]')).toHaveCount(0);
+    await fixedInput.fill('+1 415 555 2671');
+    await expect(fixedInput).toHaveValue('+1 415 555 2671');
+    await expect(fixedCountry.getByText('E.164: +14155552671')).toBeVisible();
+
+    const composition = page.locator('#example-composition');
+    await expect(composition.locator('[data-preview-hydrated]')).toHaveAttribute(
+      'data-preview-hydrated',
+      'true'
+    );
+    const composedInput = composition.getByRole('textbox', { name: 'Phone number' });
+    const countryTrigger = composition.locator('[data-slot="phone-country-trigger"]');
+    await expect(composedInput).toBeVisible();
+    await expect(countryTrigger).toContainText('+503');
+    await composedInput.fill('+1 415 555 2671');
+    await expect(composedInput).toHaveValue('(415) 555-2671');
+    await expect(countryTrigger).toContainText('+1');
+    await expect(composition.getByText('E.164: +14155552671')).toBeVisible();
+  });
 }
 
 test('legacy component URLs permanently redirect to the Base UI route', async ({ request }) => {

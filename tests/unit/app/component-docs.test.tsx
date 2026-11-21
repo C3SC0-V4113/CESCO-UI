@@ -148,6 +148,7 @@ describe('per-base example imports', () => {
       'with-field.tsx',
     ],
     'phone-input': [
+      'composition.tsx',
       'default-country.tsx',
       'default.tsx',
       'disabled.tsx',
@@ -156,6 +157,7 @@ describe('per-base example imports', () => {
       'restricted-countries.tsx',
       'spanish-locale.tsx',
       'with-field.tsx',
+      'without-country-picker.tsx',
     ],
   };
 
