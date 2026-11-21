@@ -110,6 +110,7 @@ export function CountryPicker({
   return (
     <Select
       data-slot="phone-country-select"
+      aria-label={countryLabel}
       isOpen={isOpen}
       selectedKey={country}
       onSelectionChange={(key) => {

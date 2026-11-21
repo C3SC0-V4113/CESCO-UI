@@ -220,6 +220,21 @@ describe.each([
     );
     expect(screen.getByText('+1')).toBeTruthy();
   });
+  it('provides the React Aria Select with an accessible name', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      render(<PhoneInput value="" onChange={vi.fn()} countryLabel="Country selector" />);
+
+      expect(
+        warn.mock.calls.filter(([message]) =>
+          String(message).includes('If you do not provide a visible label')
+        )
+      ).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
   it('does not mark the country trigger invalid when aria-invalid is false', () => {
     render(<PhoneInput value="" onChange={vi.fn()} aria-invalid="false" />);
     const trigger = screen.getByTestId('phone-country-trigger');
