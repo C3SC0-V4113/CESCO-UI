@@ -84,7 +84,10 @@ export function OnThisPage({ sections }: { sections: PageSectionLink[] }) {
   );
 
   return (
-    <nav aria-label="On this page" className="sticky top-8 hidden xl:block">
+    <nav
+      aria-label="On this page"
+      className="sticky top-8 hidden max-h-[calc(100svh-4rem)] self-start overflow-y-auto overscroll-contain xl:block"
+    >
       <p className="mb-3 text-sm font-medium">On this page</p>
       <ul className="space-y-2 border-s ps-3 text-sm">
         {sections.map(({ id, title }) => (

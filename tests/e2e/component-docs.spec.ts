@@ -107,6 +107,11 @@ for (const component of pages) {
       );
 
       await page.getByRole('row', { name: new RegExp(component.apiRow) }).waitFor();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight / 2));
+      const tocBox = await toc.boundingBox();
+      expect(tocBox).not.toBeNull();
+      expect(tocBox!.y).toBeGreaterThanOrEqual(31);
+      expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(900);
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await expect(toc.getByRole('link', { name: 'API Reference' })).toHaveAttribute(
         'aria-current',
