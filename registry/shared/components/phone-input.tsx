@@ -6,7 +6,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffectEvent,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -163,7 +162,6 @@ export function PhoneInputRoot({
   const rootCountryRef = useRef(rootCountry);
   const controlledCountryRef = useRef(controlledCountry);
   const valueRef = useRef(value);
-  const pendingCountryChangeEmission = useRef<string | null>(null);
   const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
   useIsomorphicLayoutEffect(() => {
     rootCountryRef.current = rootCountry;
@@ -184,53 +182,37 @@ export function PhoneInputRoot({
     setState({
       ...(isEcho
         ? state
-        : countryPickerCount.current > 0
-          ? deriveFromValue(value, rootCountry)
-          : deriveFromValueWithFixedCountry(value, rootCountry)),
+        : controlledCountry
+          ? deriveFromValueWithFixedCountry(value, rootCountry)
+          : countryPickerCount.current > 0
+            ? deriveFromValue(value, rootCountry)
+            : deriveFromValueWithFixedCountry(value, rootCountry)),
       propValue: value,
       lastEmittedValue: undefined,
     });
   }, [rootCountry, state, value]);
 
-  const emitFromEffect = useEffectEvent((nextValue: string) => onChange?.(nextValue));
-  // A controlled country can change independently of value; reconcile its display and report only a real E.164 transition.
   useIsomorphicLayoutEffect(() => {
     const previousCountry = previousRootCountry.current;
     previousRootCountry.current = rootCountry;
     if (previousCountry === rootCountry || value !== state.propValue) return;
 
-    const digits = state.national.replace(/\D/g, '');
-    const previousE164 = state.national.trimStart().startsWith('+')
-      ? toE164International(state.national)
-      : toE164(state.country, digits);
-    const derived =
-      countryPickerCount.current > 0
-        ? { country: rootCountry, national: formatNational(rootCountry, digits) }
-        : deriveFromValueWithFixedCountry(state.national, rootCountry);
-    const nextE164 = derived.national.trimStart().startsWith('+')
-      ? toE164International(derived.national)
-      : toE164(rootCountry, derived.national);
-    const e164Changed = previousE164 !== nextE164;
+    const currentValue =
+      value ??
+      (state.national.trimStart().startsWith('+')
+        ? toE164International(state.national)
+        : toE164(state.country, state.national));
+    const derived = deriveFromValueWithFixedCountry(currentValue, rootCountry);
 
     setState((current) => {
       if (current.propValue !== state.propValue) return current;
       return {
         ...current,
         ...derived,
-        lastEmittedValue: e164Changed ? nextE164 : undefined,
+        lastEmittedValue: undefined,
       };
     });
-    if (e164Changed) pendingCountryChangeEmission.current = nextE164;
   }, [rootCountry, state, value]);
-  // Send the matching value after the layout reconciliation has committed.
-  /* eslint-disable react-doctor/no-pass-data-to-parent, react-doctor/no-prop-callback-in-effect */
-  useEffect(() => {
-    const nextValue = pendingCountryChangeEmission.current;
-    if (nextValue === null) return;
-    pendingCountryChangeEmission.current = null;
-    emitFromEffect(nextValue);
-  }, [state]);
-  /* eslint-enable react-doctor/no-pass-data-to-parent, react-doctor/no-prop-callback-in-effect */
 
   const selectedCountry = controlledCountry ?? state.country;
   const national = state.national;

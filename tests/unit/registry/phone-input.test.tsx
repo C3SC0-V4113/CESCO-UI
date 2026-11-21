@@ -87,7 +87,7 @@ describe.each([
     const view = renderToString(<PhoneInput value="+447911123456" defaultCountry="US" />);
 
     expect(view).toMatch(/\+<!-- -->44|\+44/);
-    expect(view).toContain('value="7911123456"');
+    expect(view).toContain('value="7911 123456"');
     expect(view).not.toContain('value="+44 7911 123456"');
   });
 
@@ -457,7 +457,7 @@ describe.each([
       await waitForCountryFlag();
     });
 
-    it('reformats the current digits when the controlled country changes', async () => {
+    it('keeps a foreign controlled value international when the country changes externally', async () => {
       const onChange = vi.fn();
       const { rerender } = render(
         <PhoneInputRoot country="US" value="+14155552671" onChange={onChange}>
@@ -476,19 +476,32 @@ describe.each([
       );
 
       await waitFor(() => expect(input.value).not.toBe('(415) 555-2671'));
-      expect(input.value).toBe('4155552671');
+      expect(input.value).toBe('+1 415 555 2671');
       expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+44');
-      expect(onChange).toHaveBeenCalledTimes(1);
-      expect(onChange).toHaveBeenCalledWith('+444155552671');
+      expect(onChange).not.toHaveBeenCalled();
+    });
 
-      rerender(
-        <PhoneInputRoot country="GB" value="+444155552671" onChange={onChange}>
+    it('formats a controlled value nationally when the new country matches its calling code', async () => {
+      const onChange = vi.fn();
+      const { rerender } = render(
+        <PhoneInputRoot country="US" value="+447911123456" onChange={onChange}>
           <PhoneInputCountry countryLabel="Phone country" />
           <PhoneInputNumber aria-label="Controlled phone" />
         </PhoneInputRoot>
       );
-      await waitFor(() => expect(input.value).not.toBe(''));
-      expect(onChange).toHaveBeenCalledTimes(1);
+      const input = screen.getByRole('textbox', { name: 'Controlled phone' }) as HTMLInputElement;
+
+      expect(input.value).toBe('+44 7911 123456');
+      rerender(
+        <PhoneInputRoot country="GB" value="+447911123456" onChange={onChange}>
+          <PhoneInputCountry countryLabel="Phone country" />
+          <PhoneInputNumber aria-label="Controlled phone" />
+        </PhoneInputRoot>
+      );
+
+      await waitFor(() => expect(input.value).toBe('7911 123456'));
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+44');
+      expect(onChange).not.toHaveBeenCalled();
     });
 
     it('does not emit when a controlled country change preserves E.164', () => {
@@ -555,6 +568,30 @@ describe.each([
       expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+1');
       expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('(415) 555-2671');
       expect(onChange).toHaveBeenLastCalledWith('+14155552671');
+    });
+
+    it('emits country and number changes from a picker selection', async () => {
+      const onChange = vi.fn();
+      const onCountryChange = vi.fn();
+      render(
+        <PhoneInputRoot defaultCountry="SV" onChange={onChange} onCountryChange={onCountryChange}>
+          <PhoneInputCountry countryLabel="Phone country" pinnedCountries={['SV', 'US']} />
+          <PhoneInputNumber aria-label="Picker selection phone" />
+        </PhoneInputRoot>
+      );
+      const input = screen.getByRole('textbox', { name: 'Picker selection phone' });
+      fireEvent.change(input, { target: { value: '4155552671' } });
+      onChange.mockClear();
+      onCountryChange.mockClear();
+
+      fireEvent.click(screen.getByTestId('phone-country-trigger'));
+      fireEvent.click(await screen.findByRole('option', { name: /United States/ }));
+
+      expect(onCountryChange).toHaveBeenCalledTimes(1);
+      expect(onCountryChange).toHaveBeenCalledWith('US');
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith('+14155552671');
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+1');
     });
 
     it('switches country when a picker is composed with Root and Number', async () => {
