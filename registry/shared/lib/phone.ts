@@ -44,6 +44,39 @@ export function formatNational(country: CountryCode, national: string) {
   return new AsYouType(country).input(national);
 }
 
+export function formatInternational(value: string) {
+  return new AsYouType().input(value);
+}
+
+export function toE164International(value: string) {
+  const formatter = new AsYouType();
+  formatter.input(value);
+  return formatter.getNumber()?.number ?? `+${value.replace(/\D/g, '')}`;
+}
+
+export function deriveFromValueWithFixedCountry(value: string | undefined, country: CountryCode) {
+  if (!value) return { country, national: '' };
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('+')) {
+    return { country, national: formatNational(country, trimmed) };
+  }
+
+  const digits = trimmed.replace(/\D/g, '');
+  const callingCode = getCountries()
+    .map((candidate) => ({ calling: getCountryCallingCode(candidate) }))
+    .filter(({ calling }) => digits.startsWith(calling))
+    .sort((a, b) => b.calling.length - a.calling.length)[0];
+
+  if (callingCode?.calling === getCountryCallingCode(country)) {
+    return {
+      country,
+      national: formatNational(country, digits.slice(callingCode.calling.length)),
+    };
+  }
+
+  return { country, national: formatInternational(trimmed) };
+}
+
 export function deriveFromValue(value: string | undefined, fallbackCountry: CountryCode) {
   if (!value) return { country: fallbackCountry, national: '' };
   const trimmed = value.trim();

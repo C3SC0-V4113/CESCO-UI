@@ -1,11 +1,27 @@
 import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getCountries } from 'libphonenumber-js';
+import { createRef } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PhoneInput as Aria } from '@/registry/bases/aria/phone-input/phone-input';
-import { PhoneInput as Base } from '@/registry/bases/base/phone-input/phone-input';
-import { PhoneInput as Radix } from '@/registry/bases/radix/phone-input/phone-input';
+import {
+  PhoneInput as Aria,
+  PhoneInputCountry as AriaCountry,
+  PhoneInputNumber as AriaNumber,
+  PhoneInputRoot as AriaRoot,
+} from '@/registry/bases/aria/phone-input/phone-input';
+import {
+  PhoneInput as Base,
+  PhoneInputCountry as BaseCountry,
+  PhoneInputNumber as BaseNumber,
+  PhoneInputRoot as BaseRoot,
+} from '@/registry/bases/base/phone-input/phone-input';
+import {
+  PhoneInput as Radix,
+  PhoneInputCountry as RadixCountry,
+  PhoneInputNumber as RadixNumber,
+  PhoneInputRoot as RadixRoot,
+} from '@/registry/bases/radix/phone-input/phone-input';
 import { countryFlagLoaders } from '@/registry/shared/lib/country-flag-loaders';
 import { deriveFromValue, getCountryOptions, toE164 } from '@/registry/shared/lib/phone';
 
@@ -317,3 +333,126 @@ describe.each([
     expect((input as HTMLInputElement).value).toBe('(502 555-1234');
   });
 });
+
+describe.each([
+  ['base', BaseRoot, BaseCountry, BaseNumber],
+  ['radix', RadixRoot, RadixCountry, RadixNumber],
+  ['aria', AriaRoot, AriaCountry, AriaNumber],
+] as const)(
+  'PhoneInput parts (%s)',
+  (_base, PhoneInputRoot, PhoneInputCountry, PhoneInputNumber) => {
+    it('formats and emits E.164 without a country picker', () => {
+      const onChange = vi.fn();
+      render(
+        <PhoneInputRoot defaultCountry="SV" onChange={onChange}>
+          <PhoneInputNumber id="fixed-phone" aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Fixed phone' }) as HTMLInputElement;
+      fireEvent.change(input, { target: { value: '74920123' } });
+
+      expect(input.value).toBe('7492 0123');
+      expect(onChange).toHaveBeenLastCalledWith('+50374920123');
+      expect(screen.queryByTestId('phone-country-trigger')).toBeNull();
+    });
+
+    it('forwards the number input ref and ARIA attributes', () => {
+      const inputRef = createRef<HTMLInputElement>();
+      render(
+        <PhoneInputRoot defaultCountry="SV">
+          <PhoneInputNumber
+            ref={inputRef}
+            id="forwarded-phone"
+            aria-label="Forwarded phone"
+            aria-describedby="phone-help"
+          />
+        </PhoneInputRoot>
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Forwarded phone' });
+      expect(input.getAttribute('id')).toBe('forwarded-phone');
+      expect(input.getAttribute('aria-describedby')).toBe('phone-help');
+      expect(inputRef.current).toBe(input);
+    });
+
+    it('keeps the root country when pasting a different calling code', () => {
+      const onChange = vi.fn();
+      render(
+        <PhoneInputRoot defaultCountry="SV" onChange={onChange}>
+          <PhoneInputNumber aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: '+1 415 555 2671' },
+      });
+
+      expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('+1 415 555 2671');
+      expect(onChange).toHaveBeenLastCalledWith('+14155552671');
+      expect(screen.queryByTestId('phone-country-trigger')).toBeNull();
+    });
+
+    it('strips and formats the root calling code in fixed-country mode', () => {
+      const onChange = vi.fn();
+      render(
+        <PhoneInputRoot defaultCountry="SV" onChange={onChange}>
+          <PhoneInputNumber aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: '+503 7492 0123' },
+      });
+
+      expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('7492 0123');
+      expect(onChange).toHaveBeenLastCalledWith('+50374920123');
+    });
+
+    it('keeps a foreign international value formatted when mounted or externally updated', () => {
+      const { rerender } = render(
+        <PhoneInputRoot defaultCountry="SV" value="+14155552671">
+          <PhoneInputCountry countryLabel="Country selector" pinnedCountries={['SV', 'US']} />
+          <PhoneInputNumber aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Fixed phone' }) as HTMLInputElement;
+      expect(input.value).toBe('+1 415 555 2671');
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+503');
+
+      rerender(
+        <PhoneInputRoot defaultCountry="SV" value="+50374920123">
+          <PhoneInputCountry countryLabel="Country selector" pinnedCountries={['SV', 'US']} />
+          <PhoneInputNumber aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+      expect(input.value).toBe('7492 0123');
+
+      rerender(
+        <PhoneInputRoot defaultCountry="SV" value="+14155552671">
+          <PhoneInputCountry countryLabel="Country selector" pinnedCountries={['SV', 'US']} />
+          <PhoneInputNumber aria-label="Fixed phone" />
+        </PhoneInputRoot>
+      );
+      expect(input.value).toBe('+1 415 555 2671');
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+503');
+    });
+
+    it('supports a custom part order with the number before the country picker', async () => {
+      const onChange = vi.fn();
+      render(
+        <PhoneInputRoot defaultCountry="SV" onChange={onChange}>
+          <PhoneInputNumber aria-label="Composed phone" />
+          <PhoneInputCountry pinnedCountries={['SV', 'US']} />
+        </PhoneInputRoot>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'Composed phone' })).toBeTruthy();
+      expect(screen.getByTestId('phone-country-trigger').textContent).toContain('+503');
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '74920123' } });
+      expect(onChange).toHaveBeenLastCalledWith('+50374920123');
+      await waitForCountryFlag();
+    });
+  }
+);

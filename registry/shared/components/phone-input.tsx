@@ -3,16 +3,28 @@
 import { cn } from 'cn';
 import { getCountries, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import {
+  createContext,
+  useCallback,
+  useContext,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type ComponentType,
   type InputHTMLAttributes,
+  type ReactNode,
   type Ref,
 } from 'react';
 
-import { deriveFromValue, formatNational, toE164 } from '../lib/phone';
+import {
+  deriveFromValue,
+  deriveFromValueWithFixedCountry,
+  formatInternational,
+  formatNational,
+  toE164,
+  toE164International,
+} from '../lib/phone';
 
 import type { CountryPickerProps } from './country-picker-base';
 
@@ -38,12 +50,73 @@ export type PhoneInputProps = Omit<
   ref?: Ref<HTMLInputElement>;
 };
 
-type PhoneInputCoreProps = PhoneInputProps & {
-  CountrySelector: ComponentType<CountryPickerProps>;
-  InputComponent: ComponentType<
-    InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }
-  >;
+export type PhoneInputRootProps = Pick<
+  PhoneInputProps,
+  | 'value'
+  | 'onChange'
+  | 'defaultCountry'
+  | 'disabled'
+  | 'aria-invalid'
+  | 'locale'
+  | 'countryLabel'
+  | 'searchPlaceholder'
+  | 'emptyMessage'
+  | 'pinnedGroupLabel'
+  | 'allGroupLabel'
+> & {
+  country?: CountryCode;
+  onCountryChange?: (country: CountryCode) => void;
+  children: ReactNode;
 };
+
+type PhoneInputRootInternalProps = PhoneInputRootProps & {
+  canSwitchCountryOnInput?: boolean;
+};
+
+export type PhoneInputCountryProps = Pick<
+  PhoneInputProps,
+  | 'pinnedCountries'
+  | 'countries'
+  | 'locale'
+  | 'countryLabel'
+  | 'searchPlaceholder'
+  | 'emptyMessage'
+  | 'pinnedGroupLabel'
+  | 'allGroupLabel'
+>;
+
+export type PhoneInputNumberProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'onChange' | 'defaultValue'
+> & {
+  placeholder?: string;
+  ref?: Ref<HTMLInputElement>;
+};
+
+type PhoneInputContextValue = {
+  country: CountryCode;
+  national: string;
+  disabled?: boolean;
+  invalid?: InputHTMLAttributes<HTMLInputElement>['aria-invalid'];
+  locale: string;
+  countryLabel: string;
+  searchPlaceholder: string;
+  emptyMessage: string;
+  pinnedCountries: CountryCode[];
+  countries?: CountryCode[];
+  pinnedGroupLabel: string;
+  allGroupLabel: string;
+  setCountry: (country: CountryCode) => void;
+  onNumberChange: (raw: string, input: HTMLInputElement) => void;
+};
+
+const PhoneInputContext = createContext<PhoneInputContextValue | null>(null);
+
+function usePhoneInputContext() {
+  const context = useContext(PhoneInputContext);
+  if (!context) throw new Error('PhoneInput parts must be used within PhoneInputRoot.');
+  return context;
+}
 
 function caretAfterDigits(value: string, digitCount: number) {
   if (digitCount === 0) return 0;
@@ -54,6 +127,245 @@ function caretAfterDigits(value: string, digitCount: number) {
   }
   return value.length;
 }
+
+function deriveRootValue(
+  value: string | undefined,
+  country: CountryCode,
+  canSwitchCountryOnInput: boolean
+) {
+  return canSwitchCountryOnInput
+    ? deriveFromValue(value, country)
+    : deriveFromValueWithFixedCountry(value, country);
+}
+
+export function PhoneInputRoot({
+  children,
+  value,
+  onChange,
+  defaultCountry = 'US',
+  country: controlledCountry,
+  onCountryChange,
+  disabled,
+  'aria-invalid': invalid,
+  locale = 'en',
+  countryLabel = 'Country',
+  searchPlaceholder = 'Search country',
+  emptyMessage = 'No results',
+  pinnedGroupLabel = 'Suggested',
+  allGroupLabel = 'All countries',
+  canSwitchCountryOnInput = false,
+}: PhoneInputRootInternalProps) {
+  const [state, setState] = useState(() => ({
+    propValue: value,
+    lastEmittedValue: undefined as string | undefined,
+    ...deriveRootValue(value, controlledCountry ?? defaultCountry, canSwitchCountryOnInput),
+  }));
+  const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
+  useLayoutEffect(() => {
+    const pending = pendingCaret.current;
+    if (!pending) return;
+    pendingCaret.current = null;
+    if (pending.input.isConnected && document.activeElement === pending.input) {
+      pending.input.setSelectionRange(pending.position, pending.position);
+    }
+  }, [state.national]);
+  if (value !== state.propValue) {
+    const isEcho = value === state.lastEmittedValue;
+    setState({
+      ...(isEcho
+        ? state
+        : deriveRootValue(value, controlledCountry ?? defaultCountry, canSwitchCountryOnInput)),
+      propValue: value,
+      lastEmittedValue: undefined,
+    });
+  }
+
+  const selectedCountry = controlledCountry ?? state.country;
+  const national = state.national;
+  const emit = useCallback(
+    (
+      nextCountry: CountryCode,
+      digits: string,
+      display: string,
+      emittedValue = toE164(nextCountry, digits)
+    ) => {
+      setState((current) => ({
+        ...current,
+        country: nextCountry,
+        national: display,
+        lastEmittedValue: emittedValue,
+      }));
+      if (nextCountry !== selectedCountry) onCountryChange?.(nextCountry);
+      onChange?.(emittedValue);
+    },
+    [onChange, onCountryChange, selectedCountry]
+  );
+  const setCountry = useCallback(
+    (nextCountry: CountryCode) => {
+      const digits = national.replace(/\D/g, '');
+      emit(nextCountry, digits, formatNational(nextCountry, digits));
+    },
+    [emit, national]
+  );
+  const onNumberChange = useCallback(
+    (raw: string, input: HTMLInputElement) => {
+      const previousDigits = national.replace(/\D/g, '');
+      const deleting = raw.length < national.length;
+      const digits = raw.replace(/\D/g, '');
+      if (raw.trimStart().startsWith('+')) {
+        const hasCallingCodePrefix = getCountries().some((candidate) =>
+          digits.startsWith(getCountryCallingCode(candidate))
+        );
+        if (!hasCallingCodePrefix) {
+          setState((current) => ({ ...current, national: raw }));
+          return;
+        }
+        const callingCode = getCountries()
+          .map((candidate) => ({ country: candidate, calling: getCountryCallingCode(candidate) }))
+          .filter(({ calling }) => digits.startsWith(calling))
+          .sort((a, b) => b.calling.length - a.calling.length)[0];
+        const matchesRootCountry = callingCode?.calling === getCountryCallingCode(selectedCountry);
+        const nextDigits = matchesRootCountry ? digits.slice(callingCode.calling.length) : digits;
+        // A composed input without a country picker keeps its root country fixed.
+        // The all-in-one wrapper opts into adopting international calling codes below.
+        if (canSwitchCountryOnInput) {
+          const derived = deriveFromValue(raw, selectedCountry);
+          emit(derived.country, derived.national.replace(/\D/g, ''), derived.national);
+          return;
+        }
+        if (matchesRootCountry) {
+          emit(selectedCountry, nextDigits, formatNational(selectedCountry, nextDigits));
+        } else {
+          emit(selectedCountry, digits, formatInternational(raw), toE164International(raw));
+        }
+        return;
+      }
+      const deletingDigit = digits.length < previousDigits.length;
+      const display =
+        deleting && !deletingDigit
+          ? raw.replace(/\+/g, '')
+          : formatNational(selectedCountry, digits);
+      if (deletingDigit) {
+        const selectionStart = input.selectionStart ?? raw.length;
+        const digitsBeforeCaret = raw.slice(0, selectionStart).replace(/\D/g, '').length;
+        pendingCaret.current = {
+          input,
+          position: caretAfterDigits(display, digitsBeforeCaret),
+        };
+      }
+      emit(selectedCountry, digits, display);
+    },
+    [canSwitchCountryOnInput, emit, national, selectedCountry]
+  );
+
+  const context = useMemo<PhoneInputContextValue>(
+    () => ({
+      country: selectedCountry,
+      national,
+      disabled,
+      invalid,
+      locale,
+      countryLabel,
+      searchPlaceholder,
+      emptyMessage,
+      pinnedCountries: EMPTY_PINNED_COUNTRIES,
+      pinnedGroupLabel,
+      allGroupLabel,
+      setCountry,
+      onNumberChange,
+    }),
+    [
+      selectedCountry,
+      national,
+      disabled,
+      invalid,
+      locale,
+      countryLabel,
+      searchPlaceholder,
+      emptyMessage,
+      pinnedGroupLabel,
+      allGroupLabel,
+      setCountry,
+      onNumberChange,
+    ]
+  );
+  return <PhoneInputContext.Provider value={context}>{children}</PhoneInputContext.Provider>;
+}
+
+export function PhoneInputCountryCore({
+  CountrySelector,
+  pinnedCountries,
+  countries,
+  locale,
+  countryLabel,
+  searchPlaceholder,
+  emptyMessage,
+  pinnedGroupLabel,
+  allGroupLabel,
+}: PhoneInputCountryProps & { CountrySelector: ComponentType<CountryPickerProps> }) {
+  const context = usePhoneInputContext();
+  return (
+    <CountrySelector
+      country={context.country}
+      onCountryChange={context.setCountry}
+      isDisabled={context.disabled}
+      countryLabel={countryLabel ?? context.countryLabel}
+      searchPlaceholder={searchPlaceholder ?? context.searchPlaceholder}
+      emptyMessage={emptyMessage ?? context.emptyMessage}
+      pinnedCountries={pinnedCountries ?? context.pinnedCountries}
+      countries={countries ?? context.countries}
+      pinnedGroupLabel={pinnedGroupLabel ?? context.pinnedGroupLabel}
+      allGroupLabel={allGroupLabel ?? context.allGroupLabel}
+      locale={locale ?? context.locale}
+      isInvalid={
+        context.invalid === true ||
+        (typeof context.invalid === 'string' && context.invalid !== 'false')
+      }
+    />
+  );
+}
+
+type PhoneInputNumberCoreProps = PhoneInputNumberProps & {
+  InputComponent: ComponentType<
+    InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }
+  >;
+};
+
+export function PhoneInputNumberCore({
+  InputComponent,
+  placeholder = 'Phone number',
+  ref,
+  className,
+  disabled: numberDisabled,
+  'aria-invalid': numberInvalid,
+  ...props
+}: PhoneInputNumberCoreProps) {
+  const context = usePhoneInputContext();
+  return (
+    <InputComponent
+      {...props}
+      ref={ref}
+      type="tel"
+      inputMode="tel"
+      autoComplete="tel-national"
+      placeholder={placeholder}
+      className={cn('min-w-0 flex-1', className)}
+      value={context.national}
+      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+        context.onNumberChange(event.currentTarget.value, event.currentTarget)
+      }
+      disabled={context.disabled ?? numberDisabled}
+      aria-invalid={context.invalid ?? numberInvalid}
+    />
+  );
+}
+
+type PhoneInputCoreProps = PhoneInputProps & {
+  CountrySelector: ComponentType<CountryPickerProps>;
+  InputComponent: ComponentType<
+    InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }
+  >;
+};
 
 export function PhoneInputCore({
   CountrySelector,
@@ -78,104 +390,39 @@ export function PhoneInputCore({
   'aria-invalid': invalid,
   ...props
 }: PhoneInputCoreProps) {
-  const [inputState, setInputState] = useState(() => ({
-    propValue: value,
-    lastEmittedValue: undefined as string | undefined,
-    ...deriveFromValue(value, defaultCountry),
-  }));
-  const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
-  useLayoutEffect(() => {
-    const pending = pendingCaret.current;
-    if (!pending) return;
-    pendingCaret.current = null;
-    if (pending.input.isConnected && document.activeElement === pending.input) {
-      pending.input.setSelectionRange(pending.position, pending.position);
-    }
-  }, [inputState.national]);
-  if (value !== inputState.propValue) {
-    const isEcho = value === inputState.lastEmittedValue;
-    setInputState({
-      ...(isEcho ? inputState : deriveFromValue(value, defaultCountry)),
-      propValue: value,
-      lastEmittedValue: undefined,
-    });
-  }
-  const { country, national } = inputState;
-  function emit(nextCountry: CountryCode, digits: string, display: string) {
-    const emittedValue = toE164(nextCountry, digits);
-    setInputState((current) => ({
-      ...current,
-      country: nextCountry,
-      national: display,
-      lastEmittedValue: emittedValue,
-    }));
-    onChange?.(emittedValue);
-  }
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const raw = event.currentTarget.value;
-    const previousDigits = national.replace(/\D/g, '');
-    const deleting = raw.length < national.length;
-    const digits = raw.replace(/\D/g, '');
-    if (raw.trimStart().startsWith('+')) {
-      const derived = deriveFromValue(raw, country);
-      const hasCallingCodePrefix = getCountries().some((candidate) =>
-        digits.startsWith(getCountryCallingCode(candidate))
-      );
-      if (!hasCallingCodePrefix) {
-        setInputState((current) => ({ ...current, national: raw }));
-        return;
-      }
-      const nextDigits = derived.national.replace(/\D/g, '');
-      emit(derived.country, nextDigits, derived.national);
-      return;
-    }
-    const deletingDigit = digits.length < previousDigits.length;
-    const display =
-      deleting && !deletingDigit ? raw.replace(/\+/g, '') : formatNational(country, digits);
-    if (deletingDigit) {
-      const selectionStart = event.currentTarget.selectionStart ?? raw.length;
-      const digitsBeforeCaret = raw.slice(0, selectionStart).replace(/\D/g, '').length;
-      pendingCaret.current = {
-        input: event.currentTarget,
-        position: caretAfterDigits(display, digitsBeforeCaret),
-      };
-    }
-    emit(country, digits, display);
-  }
   return (
-    <div data-slot="phone-input" className="flex items-stretch gap-2">
-      <CountrySelector
-        country={country}
-        onCountryChange={(next) => {
-          const digits = national.replace(/\D/g, '');
-          emit(next, digits, formatNational(next, digits));
-        }}
-        isDisabled={disabled}
-        countryLabel={countryLabel}
-        searchPlaceholder={searchPlaceholder}
-        emptyMessage={emptyMessage}
-        pinnedCountries={pinnedCountries}
-        countries={countries}
-        pinnedGroupLabel={pinnedGroupLabel}
-        allGroupLabel={allGroupLabel}
-        locale={locale}
-        isInvalid={invalid === true || (typeof invalid === 'string' && invalid !== 'false')}
-      />
-      <InputComponent
-        {...props}
-        ref={ref}
-        id={id}
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel-national"
-        placeholder={placeholder}
-        className={cn('min-w-0 flex-1', className)}
-        value={national}
-        onChange={handleChange}
-        onBlur={onBlur}
-        disabled={disabled}
-        aria-invalid={invalid}
-      />
-    </div>
+    <PhoneInputRoot
+      value={value}
+      onChange={onChange}
+      defaultCountry={defaultCountry}
+      disabled={disabled}
+      aria-invalid={invalid}
+      locale={locale}
+      countryLabel={countryLabel}
+      searchPlaceholder={searchPlaceholder}
+      emptyMessage={emptyMessage}
+      pinnedGroupLabel={pinnedGroupLabel}
+      allGroupLabel={allGroupLabel}
+      canSwitchCountryOnInput
+    >
+      <div data-slot="phone-input" className="flex items-stretch gap-2">
+        <PhoneInputCountryCore
+          CountrySelector={CountrySelector}
+          pinnedCountries={pinnedCountries}
+          countries={countries}
+        />
+        <PhoneInputNumberCore
+          InputComponent={InputComponent}
+          {...props}
+          id={id}
+          ref={ref}
+          onBlur={onBlur}
+          disabled={disabled}
+          aria-invalid={invalid}
+          className={className}
+          placeholder={placeholder}
+        />
+      </div>
+    </PhoneInputRoot>
   );
 }
