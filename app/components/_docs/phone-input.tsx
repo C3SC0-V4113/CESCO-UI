@@ -9,7 +9,7 @@ import {
   UsageSection,
 } from '@/app/components/_components/docs-sections';
 
-import { phoneInputApi } from './api';
+import { phoneInputApi, phoneInputPartsApi } from './api';
 import { readExampleSource } from './code';
 import { defineExamples } from './types';
 
@@ -56,6 +56,16 @@ const previews = {
     base: lazy(() => import('../_examples/base/phone-input/with-field')),
     radix: lazy(() => import('../_examples/radix/phone-input/with-field')),
     aria: lazy(() => import('../_examples/aria/phone-input/with-field')),
+  },
+  'without-country-picker': {
+    base: lazy(() => import('../_examples/base/phone-input/without-country-picker')),
+    radix: lazy(() => import('../_examples/radix/phone-input/without-country-picker')),
+    aria: lazy(() => import('../_examples/aria/phone-input/without-country-picker')),
+  },
+  composition: {
+    base: lazy(() => import('../_examples/base/phone-input/composition')),
+    radix: lazy(() => import('../_examples/radix/phone-input/composition')),
+    aria: lazy(() => import('../_examples/aria/phone-input/composition')),
   },
 };
 
@@ -114,6 +124,19 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
       source: readExampleSource(base, 'phone-input', 'with-field.tsx'),
       preview: renderPreview(previews['with-field']),
     },
+    'without-country-picker': {
+      title: 'Without country picker',
+      description:
+        'With SV as the fixed country, +503 is stripped and formatted nationally. A foreign +code stays internationally formatted and emits its own E.164 value without changing the root country.',
+      source: readExampleSource(base, 'phone-input', 'without-country-picker.tsx'),
+      preview: renderPreview(previews['without-country-picker']),
+    },
+    composition: {
+      title: 'Composition',
+      description: 'Arrange the number input before the country picker while sharing root state.',
+      source: readExampleSource(base, 'phone-input', 'composition.tsx'),
+      preview: renderPreview(previews.composition),
+    },
   });
   const sections: PageSectionLink[] = [
     { id: 'preview', title: 'Preview' },
@@ -135,10 +158,10 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
       <ComponentPreview example={examples[0]} />
       <InstallationSection name="phone-input" />
       <UsageSection
-        usage={`import { PhoneInput } from '@/components/phone-input';\n\n<PhoneInput defaultCountry="US" onChange={(value) => console.log(value)} />`}
+        usage={`import { PhoneInput, PhoneInputCountry, PhoneInputNumber, PhoneInputRoot } from '@/components/phone-input';\n\n// All-in-one\n<PhoneInput defaultCountry="US" onChange={(value) => console.log(value)} />\n\n// Compose only the parts you need\n<PhoneInputRoot defaultCountry="SV" onChange={(value) => console.log(value)}>\n  <PhoneInputCountry />\n  <PhoneInputNumber />\n</PhoneInputRoot>`}
       />
       <ExamplesSection examples={examples.slice(1)} />
-      <ApiReference props={phoneInputApi} />
+      <ApiReference props={[...phoneInputApi, ...phoneInputPartsApi]} />
     </ComponentDocPage>
   );
 }

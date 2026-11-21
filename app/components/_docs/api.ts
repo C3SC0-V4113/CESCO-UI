@@ -109,3 +109,33 @@ export const phoneInputApi: ApiProp[] = [
       'Accepts standard input props such as id, disabled, className, and ARIA attributes.',
   },
 ];
+
+export const phoneInputPartsApi: ApiProp[] = [
+  {
+    name: 'PhoneInputRoot',
+    type: 'children, value, onChange, defaultCountry, country, onCountryChange, disabled, aria-invalid, locale, countryLabel, searchPlaceholder, emptyMessage, pinnedGroupLabel, allGroupLabel',
+    defaultValue: 'defaultCountry="US"; locale="en"',
+    description:
+      'Provides shared state and overridable picker strings. value/onChange use E.164. Without PhoneInputCountry, foreign +codes stay international and the root country remains fixed; with an uncontrolled PhoneInputCountry mounted, international values select their country and pasted +codes switch the picker. country/onCountryChange optionally control the selected country.',
+  },
+  {
+    name: 'PhoneInputCountry',
+    type: 'pinnedCountries, countries, locale, countryLabel, searchPlaceholder, emptyMessage, pinnedGroupLabel, allGroupLabel',
+    defaultValue: 'inherits picker options from PhoneInputRoot',
+    description:
+      'Renders the base-specific country picker. Picker options passed here override matching root options.',
+  },
+  {
+    name: 'PhoneInputNumber',
+    type: 'InputHTMLAttributes<HTMLInputElement> (except value, onChange, defaultValue)',
+    defaultValue: 'placeholder="Phone number"',
+    description:
+      'Renders the formatted national number for the root calling code or keeps a foreign +code internationally formatted. Forwards input props and ref, including id and ARIA attributes.',
+  },
+  {
+    name: 'PhoneInputNumber ref',
+    type: 'Ref<HTMLInputElement>',
+    defaultValue: 'undefined',
+    description: 'Ref forwarded to the underlying number input.',
+  },
+];
