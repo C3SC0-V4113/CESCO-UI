@@ -92,16 +92,39 @@ for (const component of pages) {
       }
       const example = page.locator(component.example);
       await expect(example.getByRole('heading', { level: 3 })).toBeVisible();
-      const viewCode = example.getByRole('button', { name: 'View Code' });
-      await expect(viewCode).toHaveAttribute('aria-expanded', 'false');
-      await viewCode.click();
-      const hideCode = example.getByRole('button', { name: 'Hide Code' });
-      await expect(hideCode).toHaveAttribute('aria-expanded', 'true');
+      const card = example.locator('[data-slot="example-showcase"]');
+      const viewCode = example.getByRole('button', { name: 'View code' });
+      const codePanel = example.locator('[data-slot="collapsible-content"]');
       const code = example.locator('[data-slot="code-block-content"]');
+      const copyButton = example.locator('[data-slot="code-block-copy-button"]');
+      await expect(viewCode).toHaveAttribute('aria-expanded', 'false');
+      await expect(codePanel).toHaveAttribute('inert', '');
+      await code.focus();
+      await expect(code).not.toBeFocused();
+      await copyButton.focus();
+      await expect(copyButton).not.toBeFocused();
+      await viewCode.focus();
+      await expect(viewCode).toBeFocused();
+      const triggerBox = await viewCode.boundingBox();
+      const cardBox = await card.boundingBox();
+      expect(triggerBox).not.toBeNull();
+      expect(cardBox).not.toBeNull();
+      expect(triggerBox!.x - 3).toBeGreaterThanOrEqual(cardBox!.x);
+      expect(triggerBox!.y - 3).toBeGreaterThanOrEqual(cardBox!.y);
+      expect(triggerBox!.x + triggerBox!.width + 3).toBeLessThanOrEqual(
+        cardBox!.x + cardBox!.width
+      );
+      expect(triggerBox!.y + triggerBox!.height + 3).toBeLessThanOrEqual(
+        cardBox!.y + cardBox!.height
+      );
+      await page.keyboard.press('Enter');
+      const hideCode = example.getByRole('button', { name: 'Hide code' });
+      await expect(hideCode).toHaveAttribute('aria-expanded', 'true');
+      await expect(codePanel).not.toHaveAttribute('inert', '');
       await expect(code).toBeVisible();
       await expect(code).toContainText(component.codeMarker);
-      await hideCode.click();
-      await expect(example.getByRole('button', { name: 'View Code' })).toHaveAttribute(
+      await page.keyboard.press('Space');
+      await expect(example.getByRole('button', { name: 'View code' })).toHaveAttribute(
         'aria-expanded',
         'false'
       );
@@ -113,7 +136,7 @@ for (const component of pages) {
       expect(tocBox!.y).toBeGreaterThanOrEqual(31);
       expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(900);
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-      await expect(toc.getByRole('link', { name: 'API Reference' })).toHaveAttribute(
+      await expect(toc.getByRole('link', { name: 'API reference' })).toHaveAttribute(
         'aria-current',
         'location'
       );

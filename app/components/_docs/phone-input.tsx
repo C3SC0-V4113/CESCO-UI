@@ -121,7 +121,7 @@ export function PhoneInputDocsPage({ base }: { base: ComponentBase }) {
     { id: 'usage', title: 'Usage' },
     { id: 'examples', title: 'Examples' },
     ...examples.slice(1).map(({ id, title }) => ({ id: `example-${id}`, title })),
-    { id: 'api-reference', title: 'API Reference' },
+    { id: 'api-reference', title: 'API reference' },
   ];
 
   return (

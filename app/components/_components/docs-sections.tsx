@@ -1,7 +1,3 @@
-import { ChevronDownIcon } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table,
@@ -14,50 +10,24 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CodeBlock } from './code-block';
+import { ExampleCodeDisclosure } from './example-code-disclosure';
 import { ExamplePreview } from './example-preview';
 
 import type { ApiProp, ComponentExample } from '../_docs/types';
 
 function ExampleCode({ example }: { example: ComponentExample }) {
-  const previewLines = example.source.split('\n').slice(0, 4).join('\n');
-
   return (
     <div className="border-t">
-      <Collapsible className="group/code-collapse">
-        <div className="relative max-h-28 overflow-hidden px-4 py-3 group-data-[open]/code-collapse:hidden">
-          <pre className="overflow-hidden font-mono text-xs leading-relaxed whitespace-pre text-muted-foreground">
-            <code>{previewLines}</code>
-          </pre>
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent"
-          />
-        </div>
-        <CollapsibleContent>
-          <div className="min-w-0 p-3">
-            <CodeBlock code={example.source} language="tsx" title={`${example.title} example`} />
-          </div>
-        </CollapsibleContent>
-        <div className="px-4">
-          <CollapsibleTrigger
-            render={<Button variant="ghost" size="sm" className="w-full justify-between" />}
-          >
-            <span className="group-data-[open]/code-collapse:hidden">View Code</span>
-            <span className="hidden group-data-[open]/code-collapse:inline">Hide Code</span>
-            <ChevronDownIcon
-              aria-hidden="true"
-              className="size-4 transition-transform group-data-[open]/code-collapse:rotate-180"
-            />
-          </CollapsibleTrigger>
-        </div>
-      </Collapsible>
+      <ExampleCodeDisclosure>
+        <CodeBlock code={example.source} language="tsx" title={`${example.title} example`} />
+      </ExampleCodeDisclosure>
     </div>
   );
 }
 
 function ExampleShowcase({ example }: { example: ComponentExample }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-lg border bg-card">
+    <div data-slot="example-showcase" className="min-w-0 overflow-hidden rounded-lg border bg-card">
       <div className="min-w-0 px-5 py-6 sm:px-8 sm:py-8">
         <ExamplePreview preview={example.preview} />
       </div>
@@ -164,7 +134,7 @@ export function ApiReference({ props }: { props: ApiProp[] }) {
   return (
     <section id="api-reference" aria-labelledby="api-heading" className="min-w-0 space-y-4">
       <h2 id="api-heading" className="text-xl font-semibold tracking-tight">
-        API Reference
+        API reference
       </h2>
       <div className="min-w-0 rounded-lg border">
         <ScrollArea className="w-full min-w-0">
